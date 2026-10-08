@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0d1717"><meta name="description" content="An ASCII kitten mystery. Explore a moonlit mansion, decipher cryptic cats, and discover what sleeps beneath the cellar.">
+<title>AsciCat | The House of Small Secrets</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230d1717'/%3E%3Ctext x='2' y='21' font-family='monospace' font-size='13' fill='%239ed5bf'%3E%5E.%5E%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+<script src="game.js" defer></script>
+</head>
+<body>
+<main id="terminal">
+<header><div class="brand"><pre aria-hidden="true"> /\_/\
+( o.o )
+ &gt; ^ &lt;</pre><div><h1>ASCI<span>CAT</span><span class="cursor">_</span></h1><p>THE HOUSE OF SMALL SECRETS</p></div></div><div class="header-right"><span>ASCII TERMINAL / v1.0</span><span id="save-status">LOCAL SAVE: READY</span></div></header>
+<div class="rule" aria-hidden="true">+------------------------------------------------------------------------------------------------------------------------+</div>
+<nav aria-label="Terminal panels"><button data-panel="play" class="active">[1] EXPLORE</button><button data-panel="book">[2] CODEBOOK</button><button data-panel="journal">[3] JOURNAL</button><button data-panel="atlas">[4] MANSION</button><button id="help">[?]</button></nav>
+<section id="play-panel">
+<div class="game-layout"><div class="world"><div class="room-heading"><span id="room-number">01 / GROUND FLOOR</span><h2 id="room-name">THE FOYER</h2><span id="room-weather">RAIN AT THE WINDOWS</span></div><pre id="screen" tabindex="0" role="img" aria-label="ASCII map of the foyer. Use arrow keys or WASD to move, E to interact."></pre><div class="map-caption"><span>@ YOU &nbsp; a KITTEN &nbsp; + DOOR &nbsp; ? SECRET</span><span id="footsteps">00 STEPS</span></div><div id="room-description"></div><div class="control-line"><div class="directions"><button data-move="0,-1" aria-label="Move north">[W]</button><div><button data-move="-1,0" aria-label="Move west">[A]</button><button data-move="0,1" aria-label="Move south">[S]</button><button data-move="1,0" aria-label="Move east">[D]</button></div></div><div class="action-buttons"><button id="interact">[E] INTERACT</button><button id="pet">[P] PET</button></div><div class="control-help">ARROWS / WASD<br>CLICK A TILE TO WALK</div></div></div>
+<aside><div class="section-label">+-- YOUR NIGHT --------------------------------+</div><p class="eyebrow">THE MANSION IS KEEPING A SECRET.</p><h3>Find the missing<br>ninth kitten.</h3><p id="objective">Eight small witnesses. Six hidden words. One door below the house.</p><div class="section-label">+-- THE WHISPER --------------------------------+</div><p class="muted">Piece together the cellar's password.</p><pre id="whisper"></pre><div class="section-label">+-- IN YOUR POCKET -----------------------------+</div><div id="inventory"></div><div class="section-label">+-- FIELD NOTES --------------------------------+</div><div id="notes"></div><div class="side-footer"><span id="progress">0 / 8 MESSAGES DECODED</span><span id="rooms-count">1 / 12 ROOMS VISITED</span></div></aside></div>
+<section class="conversation" aria-labelledby="speaker"><div class="conversation-heading"><h3 id="speaker">&gt; THE HOUSE</h3><span id="cipher-label">LISTEN CLOSELY</span></div><p id="dialogue">You arrive at the mansion. Somewhere beneath the floorboards, a very small voice is calling.</p><pre id="encrypted"></pre><form id="decode-form" hidden><label for="translation">&gt; YOUR TRANSLATION <span class="muted">(the full message or its secret word)</span></label><div class="input-row"><input id="translation" autocomplete="off" spellcheck="false" placeholder="Type what the kitten really said..." maxlength="250"><button type="submit">[ENTER] DECODE</button><button id="hint" type="button">[H] HINT</button></div></form><form id="vault-form" hidden><label for="password">&gt; WHISPER THE SIX-WORD PASSWORD</label><div class="input-row"><input id="password" autocomplete="off" spellcheck="false" placeholder="The six words, in order..." maxlength="100"><button type="submit">[ENTER] WHISPER</button></div></form><p id="feedback" role="status" aria-live="polite"></p></section>
+</section>
+<section id="book-panel" class="text-panel" hidden><p class="eyebrow">POCKET EDITION / FOUND IN YOUR COAT</p><h2>The kitten codebook</h2><p>They know human words. They just enjoy making you work for them.</p><div id="book-tabs" class="book-tabs"></div><div id="book-page"></div><div class="book-bottom"><p id="pinned-clue" class="muted">Talk to a kitten to pin its message here.</p><button data-panel="play">[1] BACK TO THE HOUSE</button></div></section>
+<section id="journal-panel" class="text-panel" hidden><p class="eyebrow">A RECORD OF VERY SMALL CONVERSATIONS</p><h2>Your field journal</h2><p>Messages stay here, including the ones you haven't cracked yet.</p><div id="journal-entries"></div><button data-panel="play">[1] BACK TO THE HOUSE</button></section>
+<section id="atlas-panel" class="text-panel" hidden><p class="eyebrow">BRAMBLE HOUSE / ROOM DIRECTORY</p><h2>A rather large house</h2><p>Walk through + doorways, or choose a room you have already visited.</p><pre id="atlas-art" class="diagram"></pre><div id="room-directory"></div><button data-panel="play">[1] BACK TO THE HOUSE</button></section>
+<footer><span>BRAMBLE HOUSE / <span id="clock">00:00</span> SINCE ARRIVAL</span><div><button id="sound">[SOUND: OFF]</button><button id="restart">[NEW NIGHT]</button></div><span>NO PIXELS. JUST PAWS.</span></footer>
+</main>
+<dialog id="intro"><div class="dialog-content"><p class="eyebrow">A SMALL MYSTERY IN A VERY LARGE HOUSE</p><pre class="title-art" aria-hidden="true">                 .       *          .
+                      /\
+             /\      /##\      /\
+            /##\____/####\____/##\
+           /######################\
+           | []  []  []  []  []  [] |
+           |       BRAMBLE         |
+           | []  []  HOUSE  []  [] |
+           |_________   ___________|
+          /_________|_|_____________\
+             .  .  .  .  .  .  .
+                    /\_/\
+                   ( o.o )
+                    &gt; ^ &lt;</pre><h2>Every kitten has a secret.</h2><p>Nine kittens live in Bramble House.<br>Tonight, only eight came to dinner.</p><p>Explore the rooms. Listen to the kittens.<br>Use your codebook to untangle their words.<br>Find the little voice beneath the house.</p><button id="start">[ENTER] STEP INSIDE</button><p class="muted small">WASD / arrows to walk. E to talk or inspect.<br>Touch controls and click-to-walk also work.<br>Your progress is saved on this device.</p></div></dialog>
+<dialog id="help-dialog"><div class="dialog-content"><p class="eyebrow">TERMINAL FIELD GUIDE</p><h2>How to be a good detective</h2><pre>@    You, the house's human visitor.
+a-h  Eight kittens with encoded messages.
++    A doorway. Walk onto it to change rooms.
+?    Something worth inspecting.
+:    Carpet. Walk across it.
+#    Wall. Admirably solid.
+
+WASD / arrows   Move one character at a time.
+E / Space       Talk or inspect nearby things.
+P               Pet a nearby kitten.
+1 / 2 / 3 / 4   Explore / book / journal / map.
+Escape          Close a window or return.
+
+Click a walkable tile to walk there.
+Click a kitten or ? to approach and inspect.</pre><p>Decode the six numbered words. Find a lamp and the cellar key. Then whisper the complete sentence at the cellar door. The codebook has examples; hints are always available. There is no timer or penalty for being wrong.</p><button id="close-help">[ESC] UNDERSTOOD</button></div></dialog>
+<dialog id="confirm-dialog"><div class="dialog-content"><h2>Start a new night?</h2><p>This resets this device's saved progress.</p><button id="confirm-restart">[YES] START AGAIN</button><button id="cancel-restart">[NO] KEEP EXPLORING</button></div></dialog>
+<dialog id="ending"><div class="dialog-content"><p class="eyebrow">THE HOUSE'S LAST SECRET</p><pre class="ending-art" aria-hidden="true">       /\_/\             /\_/\
+      ( -.- )           ( o.o )
+       &gt; ^ &lt;     /\_/\   &gt; ^ &lt;
+                ( u.u )
+                 &gt; ^ &lt;
+            [ THE NINTH KITTEN ]</pre><h2>Some secrets just need a nap.</h2><p>Behind the door, in a nest of old scarves, sleeps the smallest kitten: Button. The others weren't hiding anything dreadful. They were protecting a very important nap.</p><p>Button yawns. Eight kittens tumble into the room. The mansion, for the first time tonight, feels like home.</p><p id="ending-stats"></p><button id="keep-playing">[ENTER] STAY A LITTLE LONGER</button></div></dialog>
+</body>
+</html>
