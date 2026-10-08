@@ -4,3 +4,5 @@
 .conversation{position:sticky;top:0;z-index:5;background:var(--bg);margin:0 0 20px;padding:12px 0;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);max-height:44dvh;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line) var(--bg)}
 #encrypted:empty,#feedback:empty{display:none}
 @media(max-width:760px){.conversation{margin:0 0 14px;padding:10px 0;max-height:44dvh}.conversation-heading{gap:8px}.conversation-heading h3{font-size:12px}#dialogue{font-size:11px}#encrypted{margin:8px 0;line-height:1.6}}
+
+.audio-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 6px}.audio-controls button{font-size:10px;padding:4px 5px;color:var(--green)}.audio-controls button[aria-pressed="false"]{color:var(--muted)}.audio-controls button:disabled{color:#50665d}.volume-controls{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--muted)}.volume-controls button{min-width:28px;text-align:center}@media(max-width:760px){.audio-controls{gap:3px;margin-bottom:6px}.audio-controls button{font-size:9px;min-height:30px}.volume-controls{font-size:9px;margin-left:auto}}

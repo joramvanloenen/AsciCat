@@ -16,7 +16,7 @@ Every visible illustration is made of printable ASCII characters. The map is a f
 - Click a floor tile to walk; click a kitten or question mark to approach and interact.
 - Touch buttons provide the same controls on mobile.
 
-The codebook explains Caesar shifts, Atbash, A1Z26, reversed text, Morse, and Vigenere. Every message offers three progressive hints. A decoded clue accepts either its complete translation or its secret word. There is no penalty for mistakes or time limit. Progress is saved locally on each device. Optional synthesized sounds start only after enabling sound.
+The codebook explains Caesar shifts, Atbash, A1Z26, reversed text, Morse, and Vigenere. Every message offers three progressive hints. A decoded clue accepts either its complete translation or its secret word. There is no penalty for mistakes or time limit. Progress is saved locally on each device. Synthesized voices and sound effects start after interacting with the game. The controls above the dialogue separately mute voices and SFX, replay a message, and adjust volume. Preferences are saved on the device. Each kitten has a distinct voice profile using available English browser speech voices; Echo taps out Morse. Web Audio generates footsteps, door creaks, cat chirps, purrs, discovery chimes, and room ambience without audio samples.
 
 ## Local development
 
@@ -30,4 +30,4 @@ Open http://localhost:8000. No build step is needed.
 
 ## Publishing
 
-GitHub Pages publishes from **main**, **/ (root)**. `index.html`, `style.css`, and `game.js` are the application; `.nojekyll` keeps publishing static and dependency-free.
+GitHub Pages publishes from **main**, **/ (root)**. `index.html`, `style.css`, `audio.js`, and `game.js` are the application; `.nojekyll` keeps publishing static and dependency-free.
