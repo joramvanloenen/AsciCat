@@ -1,24 +1,36 @@
 # AsciCat
 
-**The House of Small Secrets** is a complete, browser-based ASCII mystery set in Bramble House. Nine kittens live here; only eight came to dinner. Explore twelve rooms, decipher their messages, and find the missing ninth kitten beneath the cellar.
+**The House of Small Secrets** is a browser-based terminal point-and-click adventure in Bramble House. Nine kittens live here; only eight came to dinner. Explore twelve rooms, uncover physical clues, and find the missing kitten beneath the cellar.
 
 Play: https://joramvanloenen.github.io/AsciCat/
 
-Every visible illustration is made of printable ASCII characters. The map is a fixed 58 x 23 terminal grid with cell-by-cell movement, solid scenery, letter-based kittens, and connected doorways. No sprites, image assets, external fonts, frameworks, or runtime dependencies.
+Every illustration uses character art, including the classic terminal block glyphs `░▒▓█▄▀■`. Rooms occupy a fixed 58 x 23 grid with cell-by-cell movement, solid scenery, letter-based kittens, and connected doorways. No sprites, images, external fonts, frameworks, or runtime dependencies.
 
-## Controls
+## Playing
 
-- Arrow keys / WASD: move.
-- E / Space: talk or inspect within two tiles.
+Select a verb, then click an object: **LOOK AT, USE, PUSH, PULL, OPEN, CLOSE, TALK TO, TAKE, PET, WALK**. Actions automatically approach objects. The expandable object list beneath each map offers the same interactions. Furniture, portraits, cupboards, carpets, windows, and kittens all respond.
+
+The mystery uses environmental puzzles: align turning portraits, slide furniture to reveal recesses, open cupboards, combine supplies, reach a high ledge, play the piano from a pictorial clue, and operate linked cellar mechanisms. There are no cipher puzzles or password forms. Look closely at scenery and talk to kittens for hints. Observations go into the journal.
+
+Select **USE**, click an inventory item, then click its target in the room or another inventory item. **LOOK AT** inspects items. Failed combinations do not consume supplies. The inventory panel also offers a direct **USE THIS ITEM** action.
+
+- Arrow keys / WASD: walk.
+- E / Space: selected action on a nearby object.
 - P: pet a nearby kitten.
-- 1 / 2 / 3 / 4: explore, codebook, journal, mansion directory.
-- Escape: return to exploration / close dialogs.
-- Click a floor tile to walk; click a kitten or question mark to approach and interact.
-- Touch buttons provide the same controls on mobile.
+- L / O / T: select look / open / talk.
+- 1 / 2 / 3 / 4: explore / inventory / journal / mansion directory.
+- Escape: clear the held item and return to exploration.
+- Touch controls support movement and all verbs.
 
-The codebook explains Caesar shifts, Atbash, A1Z26, reversed text, Morse, and Vigenere. Every message offers three progressive hints. A decoded clue accepts either its complete translation or its secret word. There is no penalty for mistakes or time limit. Progress is saved locally on each device. Synthesized voices and sound effects start after interacting with the game. The controls above the dialogue separately mute voices and SFX, replay a message, and adjust volume. Preferences are saved on the device. Each kitten has a distinct voice profile using available English browser speech voices; Echo taps out Morse. Web Audio generates footsteps, door creaks, cat chirps, purrs, discovery chimes, and room ambience without audio samples.
+Dialogue and verbs stay above the map in a sticky interaction panel. Progress saves locally. The new adventure uses its own save slot; previous cipher-game saves are left intact. Visited rooms can be revisited through the mansion directory.
 
-## Local development
+## Audio
+
+Browser speech synthesis gives kittens distinct pitch and pace profiles. Procedural Web Audio supplies meows, purrs, footsteps, doors, discoveries, piano notes, and mansion ambience. Kittens meow before and after dialogue, and occasionally while idle in the current room. If speech synthesis is unavailable or muted, the dialogue meows still work with SFX enabled.
+
+Audio starts after interacting with the page. The controls above dialogue separately mute voices and SFX, replay a message, and adjust volume. Preferences are saved on the device. Background tabs suspend audio.
+
+## Development and publishing
 
 Serve the repository as static files:
 
@@ -28,6 +40,4 @@ python3 -m http.server 8000
 
 Open http://localhost:8000. No build step is needed.
 
-## Publishing
-
-GitHub Pages publishes from **main**, **/ (root)**. `index.html`, `style.css`, `audio.js`, and `game.js` are the application; `.nojekyll` keeps publishing static and dependency-free.
+GitHub Pages publishes from **main**, **/ (root)**. `index.html`, `style.css`, `adventure-data.js`, `audio.js`, and `game.js` make up the application; `.nojekyll` keeps publishing static and dependency-free.

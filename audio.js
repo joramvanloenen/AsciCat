@@ -1,11 +1,11 @@
 'use strict';
 (() => {
 const SETTINGS='ascicat.audio.v1';
-const PROFILES={house:{pitch:.88,rate:.93,index:0},pip:{pitch:1.4,rate:1.06,index:0},ink:{pitch:.86,rate:.88,index:1},biscuit:{pitch:1.12,rate:.87,index:2},fern:{pitch:1.3,rate:.91,index:0},echo:{pitch:1.5,rate:1.01,index:1},moth:{pitch:1.65,rate:.9,index:2},ash:{pitch:.95,rate:1.03,index:1},velvet:{pitch:1.22,rate:.86,index:0}};
+const PROFILES={house:{pitch:.88,rate:.93,index:0},pip:{pitch:1.4,rate:1.06,index:0},ink:{pitch:.86,rate:.88,index:1},biscuit:{pitch:1.12,rate:.87,index:2},fern:{pitch:1.3,rate:.91,index:0},echo:{pitch:1.5,rate:1.01,index:1},moth:{pitch:1.65,rate:.9,index:2},ash:{pitch:.95,rate:1.03,index:1},velvet:{pitch:1.22,rate:.86,index:0},button:{pitch:1.7,rate:.85,index:2}};
 class MansionAudio {
  constructor(){
   this.prefs={voice:true,sfx:true,volume:.55};try{const p=JSON.parse(localStorage.getItem(SETTINGS));if(p){if(typeof p.voice==='boolean')this.prefs.voice=p.voice;if(typeof p.sfx==='boolean')this.prefs.sfx=p.sfx;if(Number.isFinite(p.volume))this.prefs.volume=Math.max(.1,Math.min(1,p.volume));}}catch{}
-  this.ctx=null;this.bus=null;this.ambience=null;this.sources=new Set();this.ready=false;this.serial=0;this.room='foyer';this.lastStep=0;this.voices=[];this.last=null;this.utterances=[];
+  this.ctx=null;this.bus=null;this.ambience=null;this.sources=new Set();this.ready=false;this.serial=0;this.room='foyer';this.lastStep=0;this.voices=[];this.last=null;this.utterances=[];this.isTalking=false;this.dialogueTimer=null;this.fallbackTimer=null;
   this.synth=window.speechSynthesis||null;this.canSpeak=!!(this.synth&&window.SpeechSynthesisUtterance);this.canSound=!!(window.AudioContext||window.webkitAudioContext);
   this.refreshVoices=()=>{try{this.voices=(this.synth?.getVoices()||[]).filter(v=>/^en(?:-|_|$)/i.test(v.lang)).sort((a,b)=>Number(b.localService)-Number(a.localService)||a.name.localeCompare(b.name));}catch{this.voices=[];}};
   this.refreshVoices();this.synth?.addEventListener('voiceschanged',this.refreshVoices);
@@ -19,13 +19,13 @@ class MansionAudio {
  set(kind,value){this.prefs[kind]=value;this.save();if(kind==='voice'&&!value)this.stopSpeech();if(kind==='sfx'){if(value)this.unlock();else this.stopEffects();}this.mix();}
  volume(delta){this.prefs.volume=Math.round(Math.max(.1,Math.min(1,this.prefs.volume+delta))*100)/100;this.save();this.mix();return this.prefs.volume;}
  mix(duck=false){if(!this.ctx)return;const t=this.ctx.currentTime;this.bus.gain.cancelScheduledValues(t);this.bus.gain.setTargetAtTime(this.prefs.sfx?this.prefs.volume*(duck?.45:1):0,t,.035);}
- stopSpeech(){this.serial++;try{this.synth?.cancel();}catch{}this.utterances=[];this.mix();}
- speak(text,id='house'){
-  this.last={text,id};this.stopSpeech();if(!this.prefs.voice||!this.canSpeak||!this.ready||document.hidden)return;
+ stopSpeech(){clearTimeout(this.dialogueTimer);clearTimeout(this.fallbackTimer);this.isTalking=false;this.serial++;try{this.synth?.cancel();}catch{}this.utterances=[];this.mix();}
+ speak(text,id='house',options={}){
+  this.last={text,id};this.stopSpeech();if(!this.prefs.voice||!this.canSpeak||!this.ready||document.hidden){if(options.onEnd&&this.ready&&!document.hidden){this.isTalking=true;this.fallbackTimer=setTimeout(()=>{this.isTalking=false;options.onEnd();},Math.min(3000,Math.max(900,text.length*25)));}return;}this.isTalking=true;
   const profile=PROFILES[id]||PROFILES.house,serial=this.serial,chunks=[];let chunk='';
   for(const word of text.replace(/\s+/g,' ').trim().split(' ')){if((chunk+' '+word).length>180&&chunk){chunks.push(chunk);chunk='';}chunk+=(chunk?' ':'')+word;}if(chunk)chunks.push(chunk);
-  if(!chunks.length)return;
-  try{this.synth.resume();chunks.forEach((part,i)=>{const u=new window.SpeechSynthesisUtterance(part);u.lang='en-GB';u.pitch=profile.pitch;u.rate=profile.rate;u.volume=this.prefs.volume;if(this.voices.length)u.voice=this.voices[profile.index%this.voices.length];u.onstart=()=>{if(serial===this.serial)this.mix(true);};u.onend=()=>{if(serial===this.serial&&i===chunks.length-1){this.utterances=[];this.mix();}};u.onerror=e=>{if(serial!==this.serial)return;this.mix();if(!['canceled','interrupted'].includes(e.error)){this.stopSpeech();if(['synthesis-unavailable','voice-unavailable','language-unavailable'].includes(e.error)){this.canSpeak=false;window.dispatchEvent(new CustomEvent('ascicat-audio-status'));}}};this.utterances.push(u);this.synth.speak(u);});}catch{this.canSpeak=false;window.dispatchEvent(new CustomEvent('ascicat-audio-status'));}
+  if(!chunks.length){this.isTalking=false;options.onEnd?.();return;}
+  try{this.synth.resume();chunks.forEach((part,i)=>{const u=new window.SpeechSynthesisUtterance(part);u.lang='en-GB';u.pitch=profile.pitch;u.rate=profile.rate;u.volume=this.prefs.volume;if(this.voices.length)u.voice=this.voices[profile.index%this.voices.length];u.onstart=()=>{if(serial===this.serial)this.mix(true);};u.onend=()=>{if(serial===this.serial&&i===chunks.length-1){this.utterances=[];this.isTalking=false;this.mix();options.onEnd?.();}};u.onerror=e=>{if(serial!==this.serial)return;this.mix();if(!['canceled','interrupted'].includes(e.error)){this.stopSpeech();options.onEnd?.();if(['synthesis-unavailable','voice-unavailable','language-unavailable'].includes(e.error)){this.canSpeak=false;window.dispatchEvent(new CustomEvent('ascicat-audio-status'));}}};this.utterances.push(u);this.synth.speak(u);});}catch{this.isTalking=false;options.onEnd?.();this.canSpeak=false;window.dispatchEvent(new CustomEvent('ascicat-audio-status'));}
  }
  oscillator(freq,duration=.12,level=.04,delay=0,end=freq,type='sine'){
   if(!this.ctx||!this.ready||!this.prefs.sfx||document.hidden)return;
@@ -50,7 +50,7 @@ class MansionAudio {
    case 'door':noise(.28,.05,450);note(82,.22,.018,0,140,'sawtooth');note(720,.035,.025,.17,260,'square');break;
    case 'locked':note(180,.11,.035,0,100,'triangle');noise(.065,.06,1600,.12);break;
    case 'pickup':[660,880,1320].forEach((f,i)=>note(f,.3,.048,i*.08,f,'sine'));break;
-   case 'decode':[523.25,659.25,783.99,1046.5].forEach((f,i)=>note(f,.25,.045,i*.07,f,'triangle'));break;
+   case 'solve':[523.25,659.25,783.99,1046.5].forEach((f,i)=>note(f,.25,.045,i*.07,f,'triangle'));break;
    case 'error':note(240,.12,.035,0,180);note(180,.13,.035,.11,150);break;
    case 'hint':note(392,.18,.035);note(523,.25,.03,.12);break;
    case 'page':noise(.08,.025,1800,0,'highpass');break;
@@ -62,7 +62,8 @@ class MansionAudio {
    case 'creak':note(110,.5,.007,0,85,'triangle');noise(.22,.009,400);break;
   }
  }
- morse(message){if(!this.ready||!this.prefs.sfx)return;let t=.35;for(const c of message){if(t>30)break;if(c==='.'||c==='-'){const duration=c==='.'?.065:.195;this.oscillator(660,duration,.045,t);t+=duration+.065;}else t+=c==='/'?.38:.16;}}
+ catDialogue(text,id){this.stopSpeech();this.play('meow',id);this.isTalking=true;const token=this.serial;this.dialogueTimer=setTimeout(()=>{if(token!==this.serial)return;this.speak(text,id,{onEnd:()=>{this.isTalking=false;this.play('meow',id);}});},360);}
+
  destroy(){this.stopSpeech();this.stopEffects();try{this.ctx?.close();}catch{}this.synth?.removeEventListener('voiceschanged',this.refreshVoices);}
 }
 window.AsciCatAudio=MansionAudio;
