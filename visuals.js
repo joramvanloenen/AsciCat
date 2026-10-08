@@ -60,7 +60,7 @@ function furniture(o,state){const w=Math.max(...o.art.map(r=>r.length)),d=o.art.
  return group(o,s,tag);
 }
 function render({state,scene,cats,pos,room}){const [a,b]=themes[state.room]||themes.foyer,c=C[a],accent=C[b];let s=`<svg class="world-scene" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 660" aria-label="${esc(room.name)}. Click furniture, kittens, and doorways."><defs><filter id="soft-shadow"><feGaussianBlur stdDeviation="5"/></filter><pattern id="paper-grain" width="37" height="29" patternUnits="userSpaceOnUse"><circle cx="8" cy="9" r=".55" fill="#736b53" opacity=".09"/><circle cx="29" cy="24" r=".4" fill="#736b53" opacity=".08"/></pattern></defs><rect width="1000" height="660" fill="url(#paper-grain)" pointer-events="none"/>`;
- s+=text(57,51,'BRAMBLE / '+state.room.toUpperCase(),10,C.ink,'letter-spacing="2" opacity=".55"')+text(939,51,String(Object.keys(themes).indexOf(state.room)+1).padStart(2,'0'),28,accent,'text-anchor="end" font-family="Georgia,serif" opacity=".65"');
+ s+=text(57,51,'BRAMBLE / '+state.room.toUpperCase(),10,C.ink,'letter-spacing="2" opacity=".55"')+text(939,51,String(Object.keys(themes).indexOf(state.room)+1).padStart(2,'0'),28,accent,'text-anchor="end" style="font-family:Georgia,serif" opacity=".65"');
  s+=shadow(510,550,365,25)+box(0,0,57,22,8,c,-8)+poly([P(0,0),P(57,0),P(57,22),P(0,22)],C.paper,.72);
  // Separate translucent planes multiply together, including the wall/floor intersections.
  s+=poly([P(0,0),P(57,0),P(57,0,95),P(0,0,95)],c,.13)+poly([P(0,0),P(0,22),P(0,22,68),P(0,0,68)],accent,.12);
