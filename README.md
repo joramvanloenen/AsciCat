@@ -4,11 +4,13 @@
 
 Play: https://joramvanloenen.github.io/AsciCat/
 
-Every illustration uses character art, including the classic terminal block glyphs `░▒▓█▄▀■`. Rooms occupy a fixed 58 x 23 grid with cell-by-cell movement, solid scenery, letter-based kittens, and connected doorways. No sprites, images, external fonts, frameworks, or runtime dependencies.
+The world is illustrated with procedural isometric SVG: translucent architectural planes, faceted kittens, recognizable furniture, and individually drawn inventory objects. Coral, cyan, yellow, sage, and lilac inks multiply where their transparent layers overlap. Delicate contour bands, registration marks, and paper grain draw on the supplied design references. The interface shares the warm paper palette and overlapping color language.
+
+The underlying 58 x 23 navigation grid keeps collision, room connections, and environmental puzzle behavior consistent. It is never rendered as character art. No sprites, external images, fonts, frameworks, or runtime dependencies are needed.
 
 ## Playing
 
-Select a verb, then click an object: **LOOK AT, USE, PUSH, PULL, OPEN, CLOSE, TALK TO, TAKE, PET, WALK**. Actions automatically approach objects. The expandable object list beneath each map offers the same interactions. Furniture, portraits, cupboards, carpets, windows, and kittens all respond.
+Select an action, then click an illustrated object: **LOOK AT, USE, PUSH, PULL, OPEN, CLOSE, TALK TO, TAKE, PET, WALK**. Actions automatically approach objects. Hover or keyboard-focus an object for its name. The expandable object list beneath each map offers the same interactions. Furniture, portraits, cupboards, carpets, windows, and kittens all respond.
 
 The mystery uses environmental puzzles: align turning portraits, slide furniture to reveal recesses, open cupboards, combine supplies, reach a high ledge, play the piano from a pictorial clue, and operate linked cellar mechanisms. There are no cipher puzzles or password forms. Look closely at scenery and talk to kittens for hints. Observations go into the journal.
 
@@ -40,4 +42,4 @@ python3 -m http.server 8000
 
 Open http://localhost:8000. No build step is needed.
 
-GitHub Pages publishes from **main**, **/ (root)**. `index.html`, `style.css`, `adventure-data.js`, `audio.js`, and `game.js` make up the application; `.nojekyll` keeps publishing static and dependency-free.
+GitHub Pages publishes from **main**, **/ (root)**. `index.html`, `style.css`, `visuals.js`, `adventure-data.js`, `audio.js`, and `game.js` make up the application; `.nojekyll` keeps publishing static and dependency-free.
