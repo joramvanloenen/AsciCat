@@ -32,9 +32,9 @@ Kittens wander with smooth projected steps and alternating paws. Separate SVG la
 
 ## Audio
 
-Browser speech synthesis gives kittens distinct pitch and pace profiles. Procedural Web Audio supplies meows, purrs, footsteps, doors, discoveries, piano notes, and mansion ambience. Kittens meow before and after dialogue, and occasionally while idle in the current room. If speech synthesis is unavailable or muted, the dialogue meows still work with SFX enabled.
+Browser speech synthesis gives kittens distinct pitch and pace profiles. Procedural Web Audio supplies meows, purrs, footsteps, doors, discoveries, piano notes, and mansion ambience. Meows use a normalized vocal waveform with changing vowel resonances, a continuous pitch contour, and a dedicated mix channel that stays audible during speech. The opening meow finishes before the voice starts. Kittens meow before and after dialogue, and occasionally while idle in the current room. If speech synthesis is unavailable or muted, the dialogue meows still work with SFX enabled.
 
-Audio starts after interacting with the page. Expand Audio beside the dialogue to separately mute voices and SFX, replay a message, and adjust volume. Preferences are saved on the device. Background tabs suspend audio.
+Audio starts after interacting with the page. Expand Audio beside the dialogue to separately mute voices and SFX, replay a message, and adjust volume. Test meow plays a kitten sound directly from the expanded Audio controls. Preferences are saved on the device. Background tabs suspend audio.
 
 ## Development and publishing
 
