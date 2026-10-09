@@ -1,11 +1,13 @@
 const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('assert');
 const schedules=[],queue=[],prefs=new Map();let canceled=0,timerId=0;const timers=new Map();let lastDelay=0;const setTimeout=(f,delay)=>{lastDelay=delay;timers.set(++timerId,f);return timerId;},clearTimeout=id=>timers.delete(id),runTimer=()=>{const [id,f]=timers.entries().next().value;timers.delete(id);f();};
 class Param{constructor(){this.value=0;}check(v,t){assert(Number.isFinite(v)&&Number.isFinite(t)&&t>=0);schedules.push({v,t});}setValueAtTime(v,t){this.check(v,t);}setTargetAtTime(v,t){this.target=v;this.check(v,t);}linearRampToValueAtTime(v,t){this.check(v,t);}exponentialRampToValueAtTime(v,t){assert(v>0);this.check(v,t);}cancelScheduledValues(){}}
-class Node{constructor(){for(const p of ['gain','frequency','Q','threshold','knee','ratio'])this[p]=new Param();}connect(){}disconnect(){}start(t=0){assert(t>=0);}stop(t=0){assert(t>=0);this.stopped=true;}}
+class Node{constructor(){for(const p of ['playbackRate','gain','frequency','Q','threshold','knee','ratio'])this[p]=new Param();}connect(){}disconnect(){}start(t=0){assert(t>=0);}stop(t=0){assert(t>=0);this.stopped=true;}}
 class Context{constructor(){this.currentTime=1;this.sampleRate=48000;this.state='running';this.destination=new Node();}createGain(){return new Node();}createDynamicsCompressor(){return new Node();}createOscillator(){return new Node();}createBufferSource(){return new Node();}createBiquadFilter(){return new Node();}createBuffer(n,len){const data=new Float32Array(len);return {getChannelData:()=>data};}resume(){this.state='running';return Promise.resolve();}suspend(){this.state='suspended';return Promise.resolve();}close(){return Promise.resolve();}}
 const window={AudioContext:Context,SpeechSynthesisUtterance:class{constructor(text){this.text=text;}},speechSynthesis:{getVoices:()=>[{name:'Local English',lang:'en-GB',localService:true},{name:'English B',lang:'en-US',localService:false}],addEventListener(){},removeEventListener(){},resume(){},cancel(){canceled++;queue.length=0;},speak(u){queue.push(u);u.onstart?.();}},dispatchEvent(){}};
 const document={hidden:false,listeners:{},addEventListener(n,f){(this.listeners[n]??=[]).push(f);}};
-vm.runInNewContext(fs.readFileSync(path.join(__dirname,'..','audio.js'),'utf8'),{window,document,localStorage:{getItem:k=>prefs.get(k)||null,setItem:(k,v)=>prefs.set(k,v)},CustomEvent:class{},setTimeout,clearTimeout,console});
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,'..','cat-meow.js'),'utf8'),{window});
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,'..','audio.js'),'utf8'),{atob:s=>Buffer.from(s,'base64').toString('binary'),window,document,localStorage:{getItem:k=>prefs.get(k)||null,setItem:(k,v)=>prefs.set(k,v)},CustomEvent:class{},setTimeout,clearTimeout,console});
+assert(window.AsciCatMeow.pcm.length>25000,'Real recording is bundled locally');
 const a=new window.AsciCatAudio();a.speak('Hello','pip');assert.equal(queue.length,0,'no voice before first gesture');a.unlock();assert(a.ctx&&a.ambience);a.speak('Cryptic kitten','pip');assert.equal(queue[0].pitch,1.4);assert.equal(queue[0].text,'Cryptic kitten');a.speak('Second speaker','ink');assert.equal(queue.length,1,'replace rather than pile up speech');assert.equal(queue[0].pitch,.86);
 for(const fx of ['step','wall','door','locked','pickup','solve','error','hint','page','meow','purr','whisper','ending','clock','creak'])a.play(fx,'pip');assert(schedules.length>100);
 for(const id of ['pip','ink','biscuit','fern','echo','moth','ash','velvet','button']){
@@ -13,10 +15,10 @@ for(const id of ['pip','ink','biscuit','fern','echo','moth','ash','velvet','butt
  for(const value of data){assert(Number.isFinite(value));peak=Math.max(peak,Math.abs(value));power+=value*value;}
  const rms=Math.sqrt(power/data.length);
  assert(peak>.85&&peak<.87,'Each meow has an audible normalized peak with headroom');
- assert(rms>.16&&rms<.5,'Meow must sustain audible energy instead of a quiet blip');
- assert(sound.duration>.75&&sound.duration<1,'Meow lasts long enough for the vowel contour');
+ assert(rms>.1&&rms<.5,'Meow must sustain audible energy instead of a quiet blip');
+ assert(sound.duration>.45&&sound.duration<.6,'Meow lasts long enough for the recorded call');
  assert.equal(data[0],0);assert(Math.abs(data.at(-1))<.0001,'Tail fades without a click');
- assert.equal(a.meowBuffer(id),sound,'Repeated meows reuse the generated buffer');
+ assert.equal(a.meowBuffer(id),sound,'Repeated meows reuse the recorded buffer');
 }
 a.mix(true);assert.equal(a.bus.gain.target,.55*.45);assert.equal(a.meowBus.gain.target,.55,'Speech cannot duck the meow channel');
 a.stopEffects();assert.equal(a.sources.size,0);const meows=[];const play=a.play.bind(a);a.play=(name,id)=>{if(name==='meow')meows.push(id);return play(name,id);};

@@ -2,7 +2,7 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
 const root=path.join(__dirname,'..');
 class Element{
  constructor(id){this.id=id;this.listeners={};this.hidden=false;this.open=false;this.textContent='';this.innerHTML='';this.dataset={};this.children=[];this.classList={toggle(){}};}
- addEventListener(n,f){this.listeners[n]=f;}setAttribute(){}replaceChildren(...c){this.children=c;}append(...c){this.children.push(...c);}showModal(){this.open=true;}close(){this.open=false;}querySelector(selector){return this.id==='screen'&&selector==='svg'?{getBoundingClientRect:()=>({left:0,top:0,width:1000,height:660})}:null;}querySelectorAll(){return [];}matches(){return false;}
+ addEventListener(n,f){this.listeners[n]=f;}setAttribute(){}replaceChildren(...c){this.children=c;}append(...c){this.children.push(...c);}showModal(){this.open=true;}close(){this.open=false;}querySelector(selector){return this.id==='screen'&&selector==='svg'?{getBoundingClientRect:()=>({left:0,top:0,width:1000,height:760})}:null;}querySelectorAll(){return [];}matches(){return false;}
 }
 function game(storage,random){
  let now=1000;const elements={},intervals=new Map(),keys={};
@@ -10,7 +10,7 @@ function game(storage,random){
  const panels=['play','inventory','journal','atlas'].map(n=>{const e=new Element();e.dataset.panel=n;return e;});
  const sandbox={window:{addEventListener(){}},document:{hidden:false,getElementById:id=>elements[id],querySelector:()=>Object.values(elements).find(e=>e.open),querySelectorAll:q=>q.includes('data-verb')?elements.verbs.children:q.includes('move')?[]:panels,createElement:tag=>new Element(tag),addEventListener(n,f){keys[n]=f;}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},setInterval(f,period){intervals.set(period,f);},setTimeout(){},clearTimeout(){},requestAnimationFrame(){},Date:class extends Date{static now(){return now;}},Math:Object.assign(Object.create(Math),{random:()=>random}),console};
  for(const file of ['audio.js','adventure-data.js','geometry.js','player.js','visuals.js'])vm.runInNewContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox);
- const code=fs.readFileSync(path.join(root,'game.js'),'utf8').replace(/\}\)\(\);\s*$/,`window.test={get state(){return state},get verb(){return verb},get route(){return route},get scene(){return scene},get transitioning(){return transitioning},say,closeConversation,transitionRoom,move,approach,playerMotion,travel,start,selectVerb,render};})();`);
+ const code=fs.readFileSync(path.join(root,'game.js'),'utf8').replace(/\}\)\(\);\s*$/,`window.test={get state(){return state},get verb(){return verb},get route(){return route},get scene(){return scene},get grid(){return grid},get transitioning(){return transitioning},say,act,closeConversation,transitionRoom,move,approach,playerMotion,travel,start,selectVerb,render};})();`);
  vm.runInNewContext(code,sandbox);
  return {t:sandbox.window.test,e:elements,tick(ms=25){now+=ms;intervals.get(25)();},key(key,repeat=false){keys.keydown({key,repeat,target:{matches:()=>false},preventDefault(){}});},now:()=>now};
 }
@@ -55,19 +55,52 @@ for(let n=0;n<10&&held.t.state.x===30;n++)held.tick();
 assert(!held.t.playerMotion.sample(held.now()).running,'Keyboard auto-repeat must not count as a double tap');
 for(const secondDetail of [2,1]){
  const pointer=game(new Map(),0);pointer.t.start();pointer.t.selectVerb('walk');
- const click=detail=>pointer.e.screen.onclick({clientX:462.1,clientY:488.1,detail,target:{closest:()=>null}});
+ const click=detail=>pointer.e.screen.onclick({clientX:462.1,clientY:560.1,detail,target:{closest:()=>null}});
  click(1);pointer.tick(50);click(secondDetail);
  for(let n=0;n<20&&!pointer.t.playerMotion.sample(pointer.now()).running;n++)pointer.tick();
  assert(pointer.t.playerMotion.sample(pointer.now()).running,'Double click/touch taps should run to the destination');
  for(let n=0;n<500&&(pointer.t.route.length||pointer.t.playerMotion.busy(pointer.now()));n++)pointer.tick();
  assert.equal(pointer.t.state.x,41);assert.equal(pointer.t.state.y,20);
- pointer.e.screen.onclick({clientX:388.3,clientY:451.2,detail:1,target:{closest:()=>null}});
+ pointer.e.screen.onclick({clientX:388.3,clientY:523.2,detail:1,target:{closest:()=>null}});
  pointer.tick();assert(!pointer.t.playerMotion.sample(pointer.now()).running,'A new single click returns to walking');
 }
 const collision=game(new Map(),0);collision.t.start();collision.t.state.x=4;collision.t.state.y=2;collision.t.render();
 assert(collision.t.move(1,0,true));assert.equal(collision.t.state.x,5,'Running cannot skip an intervening furniture tile');
 collision.tick(1000);assert(!collision.t.move(1,0,true));assert.equal(collision.t.state.x,5);
 console.log('PASS: smooth movement integration, double click/touch tap/key running, single-click walking, collision-checked strides, buffered keyboard input, interaction after landing, persistent randomized appearance, new-night selection, and save migration.');
+
+// Every verb treats an unoccupied floor click as silent navigation.
+for(const verb of ['walk','look','use','push','pull','open','close','talk','take','pet']){
+ const floor=game(new Map(),0);floor.t.start();floor.t.selectVerb(verb);
+ const prior=[floor.e.speaker.textContent,floor.e.dialogue.textContent,floor.e.feedback.textContent];
+ floor.e.screen.onclick({clientX:462.1,clientY:560.1,detail:1,target:{closest:()=>null}});
+ for(let n=0;n<500&&(floor.t.route.length||floor.t.playerMotion.busy(floor.now()));n++)floor.tick();
+ assert.equal(floor.t.state.x,41);assert.equal(floor.t.state.y,20);assert.equal(floor.t.verb,verb);
+ assert.deepEqual([floor.e.speaker.textContent,floor.e.dialogue.textContent,floor.e.feedback.textContent],prior);
+ // A projected floor position beneath a solid cabinet must also stay silent.
+ floor.e.screen.onclick({clientX:464.1,clientY:280.3,detail:1,target:{closest:()=>null}});
+ assert.deepEqual([floor.e.speaker.textContent,floor.e.dialogue.textContent,floor.e.feedback.textContent],prior);
+}
+const props=game(new Map(),0);props.t.start();props.t.state.room='dining';props.t.state.x=45;props.t.state.y=4;props.t.render();
+const sideboard=props.t.scene.find(o=>o.id==='sideboard'),feet=props.t.playerMotion.sample(props.now()).feet;
+for(const verb of ['push','pull','open','close','look']){
+ props.t.act(sideboard,verb);assert.equal(props.t.state.x,45);assert.equal(props.t.state.y,4);
+ assert.deepEqual(props.t.playerMotion.sample(props.now()).feet,feet,'Redrawing furniture preserves planted feet');
+}
+for(const id of ['bookcase','bench','crate']){
+ const f=game(new Map(),0);f.t.start();f.t.state.room={bookcase:'library',bench:'conservatory',crate:'cellar'}[id];
+ f.t.state.x={bookcase:17,bench:28,crate:31}[id];f.t.state.y={bookcase:2,bench:6,crate:16}[id];
+ f.t.state.flags.crateReleased=true;f.t.render();const object=f.t.scene.find(o=>o.id===id),before=[f.t.state.x,f.t.state.y];
+ f.t.act(object,'push');assert.deepEqual([f.t.state.x,f.t.state.y],before,'Direct furniture actions cannot teleport a player in the destination');
+ assert(!f.t.state.flags.bookcaseMoved&&!f.t.state.flags.benchMoved&&!f.t.state.crate,'Blocked direct push leaves furniture in place');
+ f.t.approach(object,'push');assert(f.t.route.length,'Approach must route away from the future footprint');
+ for(let n=0;n<1000&&(f.t.route.length||f.t.playerMotion.busy(f.now()));n++)f.tick();
+ assert(!f.t.grid[f.t.state.y][f.t.state.x].solid,'Moving furniture must finish with the player on clear floor');
+ assert(id==='crate'?f.t.state.crate===1:f.t.state.flags[id==='bench'?'benchMoved':'bookcaseMoved']);
+}
+const redraw=game(new Map(),0);redraw.t.start();redraw.t.state.x=7;redraw.t.state.y=2;redraw.t.render();
+assert.equal(redraw.t.state.x,7);assert.equal(redraw.t.state.y,2,'Render never repairs position by teleporting');
+console.log('PASS: silent floor walking under every verb, silent blocked floor clicks, retained selected verbs, stationary sideboard interactions, planted feet across redraws, and safe approaches to all three movable props.');
 
 async function presentation(){
  const g=game(new Map(),0);g.t.start();const prior=g.e.dialogue.textContent;

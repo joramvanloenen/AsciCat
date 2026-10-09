@@ -13,14 +13,14 @@ for(const [id,room]of Object.entries(D.rooms)){
  assert(ratio>=1.15&&ratio<=2.4,id+': room must have balanced rectangular proportions');
  for(let x=0;x<=57;x+=3)for(let y=0;y<=22;y+=2){const q=G.project(x,y,0,id),tile=visuals.unproject(...q,id);near(tile.x,x);near(tile.y,y);}
  const corners=[[0,0],[57,0],[57,22],[0,22]].map(([x,y])=>G.project(x,y,0,id));
- for(const [x,y]of corners){assert(x>=60&&x<=940);assert(y>=150&&y<=610);}
+ for(const [x,y]of corners){assert(x>=60&&x<=940);assert(y>=220&&y<=720);}
  near(corners[0][0]+corners[2][0],corners[1][0]+corners[3][0]);
  near(corners[0][1]+corners[2][1],corners[1][1]+corners[3][1]);
  const svg=visuals.render({room,scene:[],cats:[],pos:{},state:{room:id,x:29,y:20,flags:{}}});
  const walls=svg.match(/class="room-walls"[^]*?<\/g>/)[0];
  const planes=[...walls.matchAll(/<polygon[^>]*points="([^"]+)"/g)].map(m=>m[1].split(' ').map(p=>p.split(',').map(Number)));
  assert.equal(planes.length,2);
- for(const [a,b,c,d]of planes){near(a[0],d[0]);near(b[0],c[0]);near(a[1]-d[1],148);near(b[1]-c[1],148);}
+ for(const [a,b,c,d]of planes){near(a[0],d[0]);near(b[0],c[0]);near(a[1]-d[1],220);near(b[1]-c[1],220);}
  for(const o of D.objects.filter(o=>o.room===id)){
   const [w,d]=D.footprint(o);assert(o.x>=0&&o.y>=0&&o.x+w<=58&&o.y+d<=23,id+': '+o.id+' extends outside the room');
  }

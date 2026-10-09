@@ -20,3 +20,9 @@ const bench=D.objects.find(o=>o.id==='pianoBench'),piano=D.objects.find(o=>o.id=
 const benchSvg=render(bench);assert(!benchSvg.includes('hinged-panel'));
 const cabinet=D.objects.find(o=>o.id==='sideboard'),cabinetSvg=render(cabinet,{'open:sideboard':true});assert(cabinetSvg.includes('open-drawer'));assert(cabinetSvg.includes('floor-furniture'));
 console.log(`PASS: ${openables.length} distinct open/closed prop states, upright portrait proportions, a physically round grounded milk bowl, floor-supported furniture, a keyboard-facing backless bench, and no room shadow.`);
+
+const highWindow=D.objects.find(o=>o.id==='highWindow'),latch=D.objects.find(o=>o.id==='highLatch');
+assert(G.get(highWindow.room).highLedge>130,'High ledge must be visibly above standing reach');
+assert(G.get(latch.room).highLatch>G.get(latch.room).doorHeight+40,'Latch belongs above the nursery doorway');
+assert.notEqual(render(highWindow),render(highWindow,{hookReached:true}),'Reaching the hook removes it from the high ledge');
+console.log('PASS: ledge and latch above standing reach, and recovered hook removed from its elevated display.');
