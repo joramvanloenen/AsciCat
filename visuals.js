@@ -91,9 +91,9 @@ function render({state,scene,cats,pos,room,player}){const [a,b]=themes[state.roo
  if(state.room==='cellar')s+=line(P(23,18),P(46,18),C.yellow,.6,3)+line(P(23,19),P(46,19),C.yellow,.35,1);
  const actors=scene.map(o=>({depth:P(o.x+Math.max(...o.art.map(r=>r.length))/2,o.y+o.art.length)[1]+(o.key||o.item?500:0),html:()=>furniture(o,state)}));
  const now=Date.now();
- for(const cat of cats.filter(t=>t.room===state.room)){const p=pos[cat.id],q=P(p.x,p.y),seed=cats.indexOf(cat),offset=catOffset(p,now);const hue=[C.coral,C.blue,C.yellow,C.green,C.lilac][seed%5];const motion={seed,now,walking:now<(p.movingUntil||0)};actors.push({depth:q[1]+offset[1],html:()=>group(cat,kitty(q[0],q[1],hue,false,0,false,motion),[q[0],q[1]-88],`data-cat-id="${cat.id}" transform="translate(${offset.join(' ')})"`)});}
+ for(const cat of cats.filter(t=>t.room===state.room)){const p=pos[cat.id],q=P(p.x,p.y),seed=cats.indexOf(cat),offset=catOffset(p,now);const hue=[C.coral,C.blue,C.yellow,C.green,C.lilac][seed%5];const motion={seed,now,walking:now<(p.movingUntil||0)};actors.push({depth:q[1]+offset[1],html:()=>group(cat,kitty(q[0],q[1],hue,false,0,false,motion),[q[0],q[1]-88],`data-cat-id="${cat.id}" data-origin-x="${q[0]}" data-origin-y="${q[1]}" transform="translate(${offset.join(' ')})"`)});}
  const playerPose=player?.sample(now)||window.BramblePlayer?.rest(state.x,state.y,now),q=playerPose?.root||P(state.x,state.y);actors.push({depth:q[1]+1,html:()=>`<g class="player" pointer-events="none">${playerPose?window.BramblePlayer.draw(state.playerStyle,playerPose):shadow(q[0],q[1],17,7)}</g>`});
- actors.sort((a,b)=>a.depth-b.depth);for(const o of actors)s+=o.html();
+ actors.sort((a,b)=>a.depth-b.depth);s+='<g class="scene-actors">';for(const o of actors)s+=o.html().replace('<g ', '<g data-depth="'+o.depth+'" ');s+='</g>';
  s+=poly([P(0,22),P(57,22),P(57,22,10),P(0,22,10)],accent,.09,'pointer-events="none"')+poly([P(57,0),P(57,22),P(57,22,10),P(57,0,10)],c,.09,'pointer-events="none"');
  s+=text(57,622,'A HOUSE MADE OF LAYERS. A MYSTERY BETWEEN THEM.',9,C.ink,'letter-spacing="1.8" opacity=".4"');s+=`<circle cx="938" cy="617" r="12" fill="${c}" opacity=".22" class="ink"/><circle cx="951" cy="617" r="12" fill="${accent}" opacity=".3" class="ink"/>`;
  return s+'</svg>';

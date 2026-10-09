@@ -82,10 +82,10 @@ function create(room,x,y,{enabled=true,reduced=false}={}){
    const unit=to.map((n,i)=>(n-pose.root[i])/Math.max(.001,distance)),toFoot=restFeet(to)[nextFoot],trailFoot=restFeet(to)[1-nextFoot];
    // Plant ahead of the pelvis: the body advances over this exact contact
    // during the following stride instead of pulling the shoe along the floor.
-   const lead=running?12:8;
+   const lead=running?12:10;
    toFoot.x+=unit[0]*lead;toFoot.y+=unit[1]*lead;
    trailFoot.x-=unit[0]*5;trailFoot.y-=unit[1]*5;
-   motion={start:now,duration:running?Math.max(110,Math.min(200,distance/150*1000)):Math.max(135,Math.min(190,distance/85*1000)),from:pose.root.slice(),to,feet:pose.feet.map(copy),swing:nextFoot,toFoot,trailFoot,running,landed:false};
+   motion={start:now,duration:running?Math.max(110,Math.min(200,distance/150*1000)):Math.max(155,Math.min(220,distance/72*1000)),from:pose.root.slice(),to,feet:pose.feet.map(copy),swing:nextFoot,toFoot,trailFoot,running,landed:false};
    return true;
   },
   drainFootfalls(){const n=contacts;contacts=0;return n;},

@@ -24,7 +24,7 @@ Select **USE**, click an inventory item, then click its target in the room or an
 - Escape: clear the held item and return to exploration.
 - Touch controls support movement and all verbs.
 
-Dialogue and verbs stay above the map in a sticky interaction panel. Progress saves locally. The new adventure uses its own save slot; previous cipher-game saves are left intact. Visited rooms can be revisited through the mansion directory.
+Walk is the default action on launch and every new night. Dialogue stays in a compact sticky panel above the room; the verb buttons sit directly below it in a sticky action dock. Audio, room objects, clues/progress, and room details collapse until needed. Pockets appear in the dock when Use is selected. Buttons have visible borders, filled backgrounds, and a pressed state. Room hotspots are retained during movement, so hovering labels remain stable. Progress saves locally. The new adventure uses its own save slot; previous cipher-game saves are left intact. Visited rooms can be revisited through the mansion directory.
 
 ## Kitten animation
 
@@ -34,7 +34,7 @@ Kittens wander with smooth projected steps and alternating paws. Separate SVG la
 
 Browser speech synthesis gives kittens distinct pitch and pace profiles. Procedural Web Audio supplies meows, purrs, footsteps, doors, discoveries, piano notes, and mansion ambience. Kittens meow before and after dialogue, and occasionally while idle in the current room. If speech synthesis is unavailable or muted, the dialogue meows still work with SFX enabled.
 
-Audio starts after interacting with the page. The controls above dialogue separately mute voices and SFX, replay a message, and adjust volume. Preferences are saved on the device. Background tabs suspend audio.
+Audio starts after interacting with the page. Expand Audio beside the dialogue to separately mute voices and SFX, replay a message, and adjust volume. Preferences are saved on the device. Background tabs suspend audio.
 
 ## Development and publishing
 
@@ -52,4 +52,4 @@ GitHub Pages publishes from **main**, **/ (root)**. `index.html`, `style.css`, `
 
 Each new night chooses one of seven illustrated characters, saved with the adventure. Room-space foot anchors remain fixed throughout stance. Alternating lifted steps, two-segment leg/arm joints, weight transfer, and a lifted closing step bring the character naturally to rest. Footfall sounds follow landing. The renderer updates the player alone between tiles and retains the current gait through room redraws. Reduced motion keeps the same character with immediate movement.
 
-Walking now plants the leading foot ahead of the body and is about 55% faster. Double click or double tap a destination with Walk selected to run; double tap and hold a direction key to run using the keyboard. Running uses longer collision-checked strides, higher knee lift, bent arm swings, and airborne toe-off. A new single click returns to walking.
+Walking plants the leading foot slightly farther ahead of the body, with a calmer cadence (72 projected pixels per second). Double click or double tap a destination with Walk selected to run; double tap and hold a direction key to run using the keyboard. Running uses longer collision-checked strides, higher knee lift, bent arm swings, and airborne toe-off. A new single click returns to walking.

@@ -44,7 +44,7 @@ for(const running of [false,true])for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]
   const initial=player.rest(20,12).root,target=player.rest(20+step*dx*stride,12+step*dy*stride).root;
   const direction=target.map((v,i)=>v-initial[i]),length=Math.hypot(...direction);
   const lead=(end.feet[swing].x-end.root[0])*(direction[0]/length)+(end.feet[swing].y-end.root[1])*(direction[1]/length);
-  assert(lead>3,'Leading foot must plant visibly ahead of the body');
+  assert(lead>(running?3:5.5),'Leading foot must plant visibly ahead of the body');
   assert.equal(motion.drainFootfalls(),1,'Exactly one footfall per stride');
   assert.equal(motion.drainFootfalls(),0,'A redraw cannot replay the footfall');
   now+=200;swing=1-swing;
@@ -65,7 +65,7 @@ assert.equal(turning.sample(1240).feet[1].y,contact.y);
 const fast=player.create('foyer',20,12),runner=player.create('foyer',20,12);
 fast.stepTo(21,12,1000);runner.stepTo(21,12,1000,{running:true});
 assert(!runner.sample(1115).walking,'Running should cover a tile faster than walking');
-assert(fast.sample(1115).walking);
+assert(fast.sample(1150).walking,'Walking cadence should be calmer than the previous 85 px/s gait');
 assert(!fast.sample(1190).walking,'Walking must finish a tile in under 190 ms');
 const reduced=player.create('foyer',20,12,{reduced:true});
 assert(reduced.stepTo(21,12,1000));assert(!reduced.busy(1001));assert(!reduced.sample(1001).walking);
