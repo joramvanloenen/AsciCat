@@ -10,7 +10,7 @@ function game(storage,random){
  const panels=['play','inventory','journal','atlas'].map(n=>{const e=new Element();e.dataset.panel=n;return e;});
  const sandbox={window:{addEventListener(){}},document:{hidden:false,getElementById:id=>elements[id],querySelector:()=>Object.values(elements).find(e=>e.open),querySelectorAll:q=>q.includes('data-verb')?elements.verbs.children:q.includes('move')?[]:panels,createElement:tag=>new Element(tag),addEventListener(n,f){keys[n]=f;}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},setInterval(f,period){intervals.set(period,f);},setTimeout(){},clearTimeout(){},requestAnimationFrame(){},Date:class extends Date{static now(){return now;}},Math:Object.assign(Object.create(Math),{random:()=>random}),console};
  for(const file of ['audio.js','adventure-data.js','geometry.js','player.js','visuals.js'])vm.runInNewContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox);
- const code=fs.readFileSync(path.join(root,'game.js'),'utf8').replace(/\}\)\(\);\s*$/,`window.test={get state(){return state},get verb(){return verb},get route(){return route},get scene(){return scene},move,approach,playerMotion,travel,start,selectVerb,render};})();`);
+ const code=fs.readFileSync(path.join(root,'game.js'),'utf8').replace(/\}\)\(\);\s*$/,`window.test={get state(){return state},get verb(){return verb},get route(){return route},get scene(){return scene},get transitioning(){return transitioning},say,closeConversation,transitionRoom,move,approach,playerMotion,travel,start,selectVerb,render};})();`);
  vm.runInNewContext(code,sandbox);
  return {t:sandbox.window.test,e:elements,tick(ms=25){now+=ms;intervals.get(25)();},key(key,repeat=false){keys.keydown({key,repeat,target:{matches:()=>false},preventDefault(){}});},now:()=>now};
 }
@@ -30,6 +30,7 @@ g.key('ArrowRight');for(let n=0;n<20&&t.state.x===30;n++)g.tick();
 assert.equal(t.state.x,31,'A buffered key should execute after the previous footfall');
 g.tick(300);
 const clock=t.scene.find(o=>o.id==='clock');t.approach(clock,'open');
+for(let n=0;n<20&&!t.playerMotion.sample(g.now()).running;n++)g.tick();assert(t.playerMotion.sample(g.now()).running,'Verb interactions must run into reach');
 let awaitedLanding=false;
 for(let n=0;n<1000&&g.e.speaker.textContent!==clock.name;n++){
  g.tick();
@@ -67,3 +68,22 @@ const collision=game(new Map(),0);collision.t.start();collision.t.state.x=4;coll
 assert(collision.t.move(1,0,true));assert.equal(collision.t.state.x,5,'Running cannot skip an intervening furniture tile');
 collision.tick(1000);assert(!collision.t.move(1,0,true));assert.equal(collision.t.state.x,5);
 console.log('PASS: smooth movement integration, double click/touch tap/key running, single-click walking, collision-checked strides, buffered keyboard input, interaction after landing, persistent randomized appearance, new-night selection, and save migration.');
+
+async function presentation(){
+ const g=game(new Map(),0);g.t.start();const prior=g.e.dialogue.textContent;
+ g.t.say('Pip','A very important kitten opinion.',{id:'pip',name:'Pip'});
+ assert(!g.e['talk-cloud'].hidden);assert.equal(g.e['talk-speaker'].textContent,'Pip');assert.equal(g.e['talk-text'].textContent,'A very important kitten opinion.');
+ assert.equal(g.e.dialogue.textContent,prior,'Talking must not replace field observations');
+ g.e['close-talk'].onclick();assert(g.e['talk-cloud'].hidden);
+ g.t.say('Pip','Another opinion.',{id:'pip',name:'Pip'});g.t.say('Clock','Only dust.');assert(g.e['talk-cloud'].hidden);
+ const fades=[],stage=g.e['room-stage'];stage.animate=(frames,options)=>{let resolve;const animation={frames,options,cancelled:false,finished:new Promise(r=>resolve=r),cancel(){this.cancelled=true;},resolve:()=>resolve()};fades.push(animation);return animation;};
+ let complete=false;g.t.travel('hall','n',()=>complete=true);
+ assert(g.t.transitioning);assert.equal(g.t.state.room,'foyer','Old room stays visible during fade-out');assert.equal(fades.length,1);
+ assert.equal(fades[0].frames[1].opacity,0);assert(!g.t.move(1,0),'Input must not move through a transition');
+ g.t.travel('library','w');assert.equal(fades.length,1,'Repeated doors cannot start overlapping fades');
+ fades[0].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(g.t.state.room,'hall');assert.equal(fades.length,2);assert.equal(fades[1].frames[0].opacity,0);assert(!complete);
+ assert(g.t.state.flags['open:door:foyer:n']);assert(g.t.state.flags['open:door:hall:s']);
+ fades[1].resolve();await new Promise(resolve=>setImmediate(resolve));assert(!g.t.transitioning);assert(complete);assert(fades.every(a=>a.cancelled));
+ console.log('PASS: separate dismissible talk clouds, run-to-action movement, fade-out before room replacement, fade-in before completing arrival, transition input guards, and persistent doorway open states.');
+}
+presentation().catch(e=>{console.error(e);process.exitCode=1;});

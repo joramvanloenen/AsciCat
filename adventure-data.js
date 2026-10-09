@@ -168,7 +168,7 @@ decor('kitchen','prepTable','Preparation table',26,10,11,4,'console','A worktabl
 decor('bedroom','leftNightstand','Left bedside table',29,1,4,3,'console','A bedside table with a candle and a neatly folded blue scarf.');
 decor('bedroom','rightNightstand','Right bedside table',49,1,4,3,'console','A bedside table. Its drawer contains a perfectly ordinary spare pillowcase.',{openable:true,inside:'One spare pillowcase. No kitten, although there is enough fur to assemble one.'});
 decor('bedroom','bedroomChair','Bedroom chair',7,14,5,4,'chair','An upholstered chair beside the wardrobe. Someone has claimed the cushion.');
-decor('music','pianoBench','Piano bench',10,17,13,2,'bench','A low bench centered on the keyboard, with room to sit and play.');
+decor('music','pianoBench','Piano bench',10,15,13,2,'bench','A low backless bench centered on the keyboard, facing the piano.',{backless:true,facing:'n'});
 decor('vault','nurseryRug','Nursery rug',16,6,27,13,'rug','A soft rug surrounds the nest of borrowed scarves.',{walkable:true});
 D.rooms.gallery.doorPositions={n:[37,0]};
 D.rooms.library.doorPositions={n:[31,0]};

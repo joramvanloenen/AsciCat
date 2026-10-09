@@ -43,12 +43,53 @@ function itemArt(id,x=0,y=0,size=1){let s='';const c=C.yellow;
  if(id==='ribbon')s=path('M-20 -13 Q-7 -25 0 -10 Q7 -25 20 -13 Q21 0 0 -10 Q-20 3 -20 -13 M0 -10 L-9 14 M0 -10 L12 12',C.blue,.7,3,C.blue);
  return `<g transform="translate(${x} ${y}) scale(${size})">${s}</g>`;
 }
-function portrait(o,state,c){const w=window.AsciAdventure.footprint(o)[0]*window.BrambleGeometry.get(activeRoom).sx,h=o.rotation?84:74,[x,y]=P(o.x,0,56);const tilt=.5,shear=`matrix(1 ${tilt} 0 1 ${x} ${y-h})`;let inside='';
- if(o.id==='musicPortrait')inside=path('M22 17 Q9 24 22 32 Q16 20 22 17',C.yellow,.8,2)+`<ellipse cx="${w/2}" cy="38" rx="11" ry="6" fill="none" stroke="${C.blue}"/><circle cx="${w/2}" cy="38" r="2" fill="${C.blue}"/>`+path(`M${w-38} 50 l20 -5 M${w-38} 53 l20 2 M${w-38} 56 l19 9`,C.coral,.8,1.8);
- else if(o.id==='familyPortrait'&&state.flags.portraitLifted){inside=text(18,24,'A FAMILY SKETCH',8,C.ink)+text(18,51,'→   ↑   ←',22,C.coral);}
- else if(o.id==='dinnerPortrait')inside=Array.from({length:9},(_,i)=>`<ellipse cx="${18+i%3*30}" cy="${20+Math.floor(i/3)*17}" rx="8" ry="4" fill="${C.coral}" fill-opacity=".25" stroke="${C.coral}"/>`).join('');
- else {inside=kitty(w/2,67,c,true,0,true);if(o.rotation){const index=['west','center','east'].indexOf(o.rotation);inside+=text(w-23,27,['↑','→','↓','←'][state.orientations[index]],20,C.ink);}}
- return shadow(x+w/2,y+w*tilt*.5+8,w*.55,11)+`<g transform="${shear}" class="ink"><rect width="${w}" height="${h}" rx="2" fill="${c}" fill-opacity=".17" stroke="${c}" stroke-width="3"/><rect x="8" y="8" width="${w-16}" height="${h-16}" fill="#fffdf0" fill-opacity=".40" stroke="${c}" stroke-opacity=".4"/>${inside}</g>`+line([x,y],[x,y+20],c,.6,2)+line([x+w,y+w*tilt],[x+w,y+w*tilt+20],c,.6,2);
+function portrait(o,state,c){
+ const footprint=window.AsciAdventure.footprint(o),w=o.id==='musicPortrait'?62:56,h=o.id==='musicPortrait'?92:82;
+ const center=P(o.x+footprint[0]/2,0,48),origin=[center[0]-w/2,center[1]-h-w/4];let inside='';
+ if(o.id==='musicPortrait')inside=path('M29 15 Q20 21 29 27 Q25 20 29 15',C.yellow,.8,2)+`<ellipse cx="31" cy="43" rx="10" ry="5" fill="none" stroke="${C.blue}"/><circle cx="31" cy="43" r="2" fill="${C.blue}"/>`+path('M20 63 l22 -4 M20 67 h22 M20 71 l22 4',C.coral,.8,1.8);
+ else if(o.id==='familyPortrait'&&state.flags.portraitLifted)inside=text(w/2,25,'FAMILY',7,C.ink,'text-anchor="middle"')+text(w/2,52,'→ ↑ ←',13,C.coral,'text-anchor="middle"');
+ else if(o.id==='dinnerPortrait')inside=Array.from({length:9},(_,i)=>`<ellipse cx="${15+i%3*13}" cy="${23+Math.floor(i/3)*17}" rx="4.7" ry="2.7" fill="${C.coral}" fill-opacity=".25" stroke="${C.coral}"/>`).join('');
+ else{inside=`<g transform="translate(${w/2} ${h-12}) scale(.7)">${kitty(0,0,c,true,0,true)}</g>`;if(o.rotation){const index=['west','center','east'].indexOf(o.rotation);inside+=text(w-13,23,['↑','→','↓','←'][state.orientations[index]],14,C.ink);}}
+ return `<g class="portrait-frame ink" data-frame-width="${w}" data-frame-height="${h}" transform="matrix(1 .5 0 1 ${origin.join(' ')})"><rect width="${w}" height="${h}" rx="2" fill="${c}" fill-opacity=".17" stroke="${c}" stroke-width="3"/><rect x="7" y="7" width="${w-14}" height="${h-14}" fill="#fffdf0" fill-opacity=".40" stroke="${c}" stroke-opacity=".4"/>${inside}</g>`;
+}
+function hingedPanel(x,y,w,h,c,z=0,open=false,axis='x',inward=1){
+ const g=window.BrambleGeometry.get(activeRoom),angle=open?1.12:0;
+ const end=axis==='x'?[x+w*Math.cos(angle),y+inward*Math.abs(w)*g.sx/g.sy*Math.sin(angle)]:[x+inward*Math.abs(w)*g.sy/g.sx*Math.sin(angle),y+w*Math.cos(angle)];
+ const a=P(x,y,z),b=P(...end,z),A=P(x,y,z+h),B=P(...end,z+h);
+ return `<g class="hinged-panel" data-open="${open}">${poly([a,b,B,A],c,.23)+line(A,B,c,.8,2)+line(a,A,c,.7,2)}<circle cx="${a[0]+(b[0]-a[0])*.82}" cy="${a[1]+(b[1]-a[1])*.82-h*.5}" r="2.5" fill="${C.ink}" opacity=".65"/></g>`;
+}
+function drawer(x,y,w,d,z,h,c,accent,open){
+ const front=y+d,depth=open?2.3:.25;let s='';
+ if(open)s+=`<g class="open-drawer">${poly([P(x,front-.6,z),P(x+w,front-.6,z),P(x+w,front+depth,z),P(x,front+depth,z)],C.ink,.19)+box(x,front-.6,.25,depth+.6,h,c,z)+box(x+w-.25,front-.6,.25,depth+.6,h,c,z)}</g>`;
+ s+=poly([P(x,front+depth,z),P(x+w,front+depth,z),P(x+w,front+depth,z+h),P(x,front+depth,z+h)],accent,.3);
+ s+=line(P(x+w*.4,front+depth,z+h*.5),P(x+w*.6,front+depth,z+h*.5),C.ink,.8,2.5);return s;
+}
+function cabinet(o,c,accent,open){
+ const [w,d]=window.AsciAdventure.footprint(o),{x,y,id}=o,tall=['bookcase','wardrobe','cupboard'].includes(id),h=tall?90:id==='bottles'?67:42,desk=id==='desk',base=desk?25:6;
+ let s=`<g class="floor-furniture" data-base-z="0">`;
+ for(const [a,b]of [[.5,.5],[w-1,.5],[.5,d-.6],[w-1,d-.6]])s+=box(x+a,y+b,.5,.5,base,c);
+ s+=box(x,y,w,d,h-base,c,base);
+ if(['bookcase','bottles'].includes(id))for(let j=1;j<4;j++){const z=base+(h-base)*j/4;s+=line(P(x,y+d,z),P(x+w,y+d,z),c,.6);for(let i=1;i<w-1;i+=1.7)s+=box(x+i,y+d-.8,.65,.65,id==='bottles'?10:15,[c,accent,C.lilac][Math.floor(i+j)%3],base+(h-base)*(j-1)/4+2);}
+ if(['wardrobe','cupboard','bottles'].includes(id)){
+  s+=poly([P(x+.3,y+d,base+1),P(x+w-.3,y+d,base+1),P(x+w-.3,y+d,h-2),P(x+.3,y+d,h-2)],C.ink,open?.13:.025);
+  s+=hingedPanel(x,y+d,w/2,h-base,c,base,open)+hingedPanel(x+w,y+d,-w/2,h-base,accent,base,open);
+  if(open&&id==='wardrobe')for(let i=1;i<w;i+=2)s+=box(x+i,y+d-.8,.8,.3,40,C.blue,base+8);
+ }
+ if(id==='desk'||id==='sideboard')s+=drawer(x+.4,y,w-.8,d,id==='desk'?28:25,9,c,accent,open);
+ if(id==='sideboard')for(const a of [0,w/2])s+=hingedPanel(x+a,y+d,w/2,18,c,base,false);
+ if(id==='chest'||id==='trunk'){
+  if(open)s+=poly([P(x,y,h),P(x+w,y,h),P(x+w,y+d*.3,h+32),P(x,y+d*.3,h+32)],accent,.27)+poly([P(x+.5,y+.4,h-1),P(x+w-.5,y+.4,h-1),P(x+w-.5,y+d-.4,h-1),P(x+.5,y+d-.4,h-1)],C.ink,.23);
+  else s+=box(x,y,w,d,3,accent,h);
+  s+=line(P(x+w/2,y+d,19),P(x+w/2,y+d,27),accent,.9,3);
+ }
+ if(id==='desk')s+=box(x+2,y+.5,3,2,1,C.paper,h+1)+text(...P(x+3.5,y+1,h+2),'NOTES',6,C.ink);
+ return s+'</g>';
+}
+function bowl(x,y,w,d,c){
+ const g=window.BrambleGeometry.get(activeRoom),radius=Math.min(w*g.sx,d*g.sy)*.46,cx=x+w/2,cy=y+d/2;
+ const ring=(r,z,front=false)=>Array.from({length:front?17:33},(_,i)=>{const a=front?-Math.PI/4+i*Math.PI/16:i*Math.PI/16;return P(cx+Math.cos(a)*r/g.sx,cy+Math.sin(a)*r/g.sy,z);});
+ const top=ring(radius,11,true),bottom=ring(radius*.72,0,true);
+ return `<g class="round-bowl" data-base-z="0">${poly(ring(radius*.72,0),c,.12)+poly([...top,...bottom.reverse()],c,.32)+poly(ring(radius,11),c,.17)+poly(ring(radius*.8,10),C.paper,.87)}</g>`;
 }
 function decorFurniture(o,c,accent){
  const [w,d]=window.AsciAdventure.footprint(o),x=o.x,y=o.y,F=(a,b,z=0)=>P(x+a,y+b,z);let s='';
@@ -57,41 +98,50 @@ function decorFurniture(o,c,accent){
  const height=o.kind==='smallTable'?28:o.kind==='chair'?23:o.kind==='bench'?23:34;
  for(const [a,b]of [[.3,.3],[w-.7,.3],[.3,d-.7],[w-.7,d-.7]])s+=box(x+a,y+b,.4,.4,height,c);
  s+=box(x,y,w,d,4,c,height);
- if(o.kind==='chair'||o.kind==='bench'){const facing=o.facing||'s';s+=facing==='e'||facing==='w'?box(x+(facing==='w'?w-.3:0),y,.3,d,32,accent,height+4):box(x,y+(facing==='n'?d-.3:0),w,.3,o.kind==='chair'?32:22,accent,height+4);if(o.kind==='chair')s+=box(x+.3,y+.3,w-.6,d-.6,3,C.lilac,height+4);}
- if(o.kind==='console')s+=box(x+.5,y+.5,w-1,d-1,6,accent,height-7);
+ if(o.kind==='chair'||(o.kind==='bench'&&!o.backless)){const facing=o.facing||'s';s+=facing==='e'||facing==='w'?box(x+(facing==='w'?w-.3:0),y,.3,d,32,accent,height+4):box(x,y+(facing==='n'?d-.3:0),w,.3,o.kind==='chair'?32:22,accent,height+4);if(o.kind==='chair')s+=box(x+.3,y+.3,w-.6,d-.6,3,C.lilac,height+4);}
+ if(o.kind==='console')s+=drawer(x+.4,y,w-.8,d,height-6,6,c,accent,!!o.open);
  return s;
 }
 function furniture(o,state){const [w,d]=window.AsciAdventure.footprint(o),x=o.x,y=o.y,id=o.id,[px,py]=P(x+w/2,y+d/2),color=C[(themes[o.room]||themes.foyer)[0]],accent=C[(themes[o.room]||themes.foyer)[1]],open=!!state.flags['open:'+id];let s=shadow(px,py,w*7,14),tag=P(x+w/2,y,90);
  const B=(a=x,b=y,W=w,D=d,H=40,c=color,z=0)=>box(a,b,W,D,H,c,z);
  const face=(a,b,z=0)=>P(x+a,y+b,z);
  if(o.item){s=shadow(px,py,19,7)+`<circle class="item-halo" cx="${px}" cy="${py-12}" r="26" fill="${C.yellow}" fill-opacity=".10" stroke="${C.yellow}" stroke-opacity=".45" stroke-dasharray="2 6"/>`+itemArt(o.item,px,py-8,.8);tag=[px,py-52];return group(o,s,tag);}
- if(o.to){const horizontal=o.dir==='n'||o.dir==='s';const height=window.BrambleGeometry.get(activeRoom).doorHeight;const [X,Y]=P(x,y),a=horizontal?P(x-3,y):P(x,y-3),b=horizontal?P(x+3,y):P(x,y+3);s=poly([a,b,[b[0],b[1]-height],[a[0],a[1]-height]],color,state.room==='cellar'&&o.dir==='n'?0:.12)+path(`M${a[0]} ${a[1]} V${a[1]-height} L${b[0]} ${b[1]-height} V${b[1]}`,color,.7,2.5)+`<circle cx="${X}" cy="${Y-28}" r="13" fill="#fffdf2" fill-opacity=".85"/>`+text(X,Y-24,({n:'↗',s:'↙',w:'↖',e:'↘'})[o.dir],16,color,'text-anchor="middle"');if(state.room==='cellar'&&o.dir==='n')s=poly([a,b,[b[0],b[1]-height],[a[0],a[1]-height]],color,0);return group(o,s,[X,Y-height-16]);}
- if(o.kind){s=decorFurniture(o,color,accent);tag=P(x+w/2,y,80);}
+ if(o.to){
+  const horizontal=o.dir==='n'||o.dir==='s',height=window.BrambleGeometry.get(activeRoom).doorHeight,[X,Y]=P(x,y),a=horizontal?P(x-3,y):P(x,y-3),b=horizontal?P(x+3,y):P(x,y+3);
+  const opened=!!state.flags['open:door:'+state.room+':'+o.dir];
+  s=poly([a,b,[b[0],b[1]-height],[a[0],a[1]-height]],color,.035)+path(`M${a[0]} ${a[1]} V${a[1]-height} L${b[0]} ${b[1]-height} V${b[1]}`,color,.7,2.5);
+  s+=hingedPanel(horizontal?x-3:x,horizontal?y:y-3,6,height,color,0,opened,horizontal?'x':'y',o.dir==='n'||o.dir==='w'?1:-1);
+  s+=`<circle cx="${X}" cy="${Y-28}" r="13" fill="#fffdf2" fill-opacity=".85"/>`+text(X,Y-24,({n:'↗',s:'↙',w:'↖',e:'↘'})[o.dir],16,color,'text-anchor="middle"');
+  if(state.room==='cellar'&&o.dir==='n')s=poly([a,b,[b[0],b[1]-height],[a[0],a[1]-height]],color,0);
+  return group(o,s,[X,Y-height-16],`data-open="${opened}"`);
+ }
+
+ if(o.kind){s=decorFurniture({...o,open},color,accent);tag=P(x+w/2,y,80);}
  else if(id.includes('Portrait'))s=portrait(o,state,accent);
- else if(id==='clock'){s+=B(x,y,w,d,118,color)+`<g transform="translate(${face(w/2,d,83).join(' ')})"><circle r="20" fill="#fffdf1" fill-opacity=".6" stroke="${color}"/>${path('M0 -13 V0 H-12',C.ink,.65,2)}${text(0,-24,'IX',9,color,'text-anchor="middle"')}</g>`+line(face(w/2,d,54),face(w/2,d,13),accent,.6,2)+`<circle cx="${face(w/2,d,14)[0]}" cy="${face(w/2,d,14)[1]}" r="7" fill="${accent}" opacity=".4"/>`;tag=face(w/2,0,128);}
- else if(['bookcase','wardrobe','cupboard','bottles','sideboard','desk','chest','trunk'].includes(id)){const height=id==='bookcase'||id==='wardrobe'||id==='cupboard'?90:id==='bottles'?67:42;s+=B(x,y,w,d,height,color);if(id==='bookcase'||id==='bottles'){for(let j=1;j<4;j++){s+=line(face(0,d,height*j/4),face(w,d,height*j/4),color,.6);for(let i=1;i<w-1;i+=1.7)s+=B(x+i,y+d-.8,.65,.65,id==='bottles'?12:17,[color,accent,C.lilac][Math.floor(i+j)%3],height*(j-1)/4+3);}}else{s+=line(face(w/2,d,0),face(w/2,d,height),color,.6);s+=line(face(w/2-1,d,height*.5),face(w/2-1,d,height*.5+7),accent,.8,3);if(open)s+=box(x+w*.65,y+d,w*.35,2,height*.8,accent,4);else s+=line(face(1,d,height*.45),face(w-1,d,height*.45),color,.4);}if(id==='desk')s+=box(x+2,y+.5,3,2,1,C.paper,height+1)+text(px,py-height-2,'FIELD NOTES',7,C.ink);if(id==='bookcase')for(const a of [1,w-1])s+=`<circle cx="${face(a,d,0)[0]}" cy="${face(a,d,0)[1]}" r="3" fill="${C.ink}" opacity=".4"/>`;tag=face(w/2,0,height+12);}
+ else if(id==='clock'){s+=B(x,y,w,d,118,color)+`<g transform="translate(${face(w/2,d,83).join(' ')})"><circle r="20" fill="#fffdf1" fill-opacity=".6" stroke="${color}"/>${path('M0 -13 V0 H-12',C.ink,.65,2)}${text(0,-24,'IX',9,color,'text-anchor="middle"')}</g>`+line(face(w/2,d,54),face(w/2,d,13),accent,.6,2)+`<circle cx="${face(w/2,d,14)[0]}" cy="${face(w/2,d,14)[1]}" r="7" fill="${accent}" opacity=".4"/>`;s+=hingedPanel(x+1,y+d,w-2,45,accent,5,open);tag=face(w/2,0,128);}
+ else if(['bookcase','wardrobe','cupboard','bottles','sideboard','desk','chest','trunk'].includes(id)){s=cabinet(o,color,accent,open);tag=face(w/2,0,['bookcase','wardrobe','cupboard'].includes(id)?102:75);}
  else if(['welcomeMat','rug','plate'].includes(id)){s=poly([face(0,0,1),face(w,0,1),face(w,d,1),face(0,d,1)],id==='plate'?C.yellow:accent,.2);if(id==='plate'){s+=line(face(0,0),face(w,d),C.yellow,.6,2);if(state.flags.crateOnPlate)s+=text(px,py,'✓',16,C.green);}else{for(let j=.4;j<d;j+=.4)s+=line(face(.2,j,2),face(w-.2,j,2),color,.18,.8);if(id==='welcomeMat')s+=`<g transform="translate(${px-30} ${py-4}) rotate(24)">${text(0,0,'WIPE YOUR PAWS',8,C.ink)}</g>`;}tag=[px,py-22];}
  else if(id==='umbrella'){s+=B(x+1,y+1,w-1,d-1,30,accent);for(let i=0;i<3;i++){s+=line(face(1.2+i,2,28),face(.5+i*1.5,2,64),color,.6,2);const a=face(.5+i*1.5,2,64);s+=path(`M${a[0]} ${a[1]} q-7 -12 -13 -2`,color,.6,2);}}
- else if(['table','bench','piano','bed','readingChair'].includes(id)){const height=id==='bed'?21:id==='readingChair'?25:id==='piano'?44:32;for(const[a,b]of [[.5,.5],[w-1,.5],[.5,d-1],[w-1,d-1]])s+=B(x+a,y+b,.5,.5,height,color);s+=B(x,y,w,d,7,color,height);if(id==='bench'||id==='readingChair')s+=B(x,id==='readingChair'?y+d-.5:y,w,.5,24,accent,height+7);if(id==='table')for(let i=1;i<=9;i++){const a=face(2+i%5*(w-4)/5,i<5?.6:d-1,height+8);s+=`<ellipse cx="${a[0]}" cy="${a[1]}" rx="8" ry="4" fill="${accent}" fill-opacity=".23" stroke="${accent}" stroke-width="1"/>`;}if(id==='piano'){s+=B(x,y,w,d-1,22,accent,height+7);for(let i=.5;i<w-.5;i+=1)s+=B(x+i,y+d-1,.85,.8,2,C.paper,height+7);if(open)s+=B(x+4,y+d,4,2,5,accent,height-10);}if(id==='bed'){for(const [a,b]of [[0,0],[w-.4,0],[0,d-.4],[w-.4,d-.4]])s+=B(x+a,y+b,.4,.4,104,accent);s+=B(x,y,w,d,3,accent,104);s+=B(x,y,w,.5,36,accent,height);s+=B(x+1,y+.5,4,1.6,9,C.paper,height+7)+B(x+6,y+.5,4,1.6,9,C.paper,height+7);s+=B(x,y+2,w,d-2,4,C.lilac,height+9);}tag=face(w/2,0,height+45);}
+ else if(['table','bench','piano','bed','readingChair'].includes(id)){const height=id==='bed'?21:id==='readingChair'?25:id==='piano'?44:32;for(const[a,b]of [[.5,.5],[w-1,.5],[.5,d-1],[w-1,d-1]])s+=B(x+a,y+b,.5,.5,height,color);s+=B(x,y,w,d,7,color,height);if(id==='bench'||id==='readingChair')s+=B(x,id==='readingChair'?y+d-.5:y,w,.5,24,accent,height+7);if(id==='table')for(let i=1;i<=9;i++){const a=face(2+i%5*(w-4)/5,i<5?.6:d-1,height+8);s+=`<ellipse cx="${a[0]}" cy="${a[1]}" rx="8" ry="4" fill="${accent}" fill-opacity=".23" stroke="${accent}" stroke-width="1"/>`;}if(id==='piano'){s+=B(x,y,w,d-1,22,accent,height+7);for(let i=.5;i<w-.5;i+=1)s+=B(x+i,y+d-1,.85,.8,2,C.paper,height+7);s+=drawer(x+4,y,5,d,height-10,6,color,accent,open);}if(id==='bed'){for(const [a,b]of [[0,0],[w-.4,0],[0,d-.4],[w-.4,d-.4]])s+=B(x+a,y+b,.4,.4,104,accent);s+=B(x,y,w,d,3,accent,104);s+=B(x,y,w,.5,36,accent,height);s+=B(x+1,y+.5,4,1.6,9,C.paper,height+7)+B(x+6,y+.5,4,1.6,9,C.paper,height+7);s+=B(x,y+2,w,d-2,4,C.lilac,height+9);}tag=face(w/2,0,height+45);}
  else if(o.key){const a=face(w/2,.5,51);s=poly([face(0,0,50),face(w,0,50),face(w,1,50),face(0,1,50)],accent,.33)+text(a[0],a[1]-2,{moon:'☾',eye:'◉',whisker:'≋'}[o.key],18,C.ink,'text-anchor="middle"');tag=[a[0],a[1]-27];}
  else if(id==='curtain'||id==='highWindow'){s='';s+=B(x,0,w,.25,85,color,38);for(let i=1;i<3;i++)s+=line(face(w*i/3,0,38),face(w*i/3,0,123),color,.45);s+=line(face(0,0,80),face(w,0,80),color,.45);if(id==='curtain'&&!open)s+=B(x,0,w,.25,85,C.lilac,38);if(id==='highWindow')s+=B(x,y+1,w,1,2,accent,68)+itemArt('hook',...face(w/2,1.4,72),.5);tag=face(w/2,0,100);}
  else if(['fernPot','ivy'].includes(id)){for(let i=0;i<(id==='fernPot'?2:1);i++){const a=face(2+i*5,2,0);s+=B(x+1+i*5,y+1,2,2,22,C.yellow);for(let j=0;j<7;j++){const angle=j*.8,aX=Math.cos(angle)*28,aY=-25-Math.sin(angle)*18;s+=path(`M${a[0]} ${a[1]-18} Q${a[0]+aX*.2} ${a[1]-53} ${a[0]+aX} ${a[1]+aY-18}`,C.green,.45,3);for(let k=.35;k<1;k+=.25)s+=`<ellipse class="ink" cx="${a[0]+aX*k}" cy="${a[1]-18+aY*k}" rx="10" ry="4" transform="rotate(${j*23} ${a[0]+aX*k} ${a[1]-18+aY*k})" fill="${C.green}" fill-opacity=".2"/>`;}}}
- else if(id==='stove'){s+=B(x,y,w,d,43,accent);for(const[a,b]of [[3,1],[8,1],[3,3],[8,3]]){const p=face(a,b,44);s+=`<ellipse cx="${p[0]}" cy="${p[1]}" rx="13" ry="7" stroke="${C.coral}" stroke-width="2" fill="${C.coral}" fill-opacity=".2"/>`;}s+=poly([face(3,d,8),face(w-3,d,8),face(w-3,d,32),face(3,d,32)],C.coral,.18);}
- else if(id==='milkBowl'){s+=B(x,y,w,d,12,color);s+=poly([face(1,.5,13),face(w-1,.5,13),face(w-1,d-.5,13),face(1,d-.5,13)],C.paper,.75);}
- else if(id==='metronome'){s+=poly([face(0,2),face(w,2),face(w/2,2,60)],accent,.25)+line(face(w/2,2,10),face(w/2+1.4,2,52),color,.8,2);}
- else if(id==='hatboxes'){s+=B(x,y,w,d,23,C.lilac)+B(x+1,y+1,w-2,d-1,23,C.coral,24)+B(x+2,y+1,w-4,d-1,16,C.yellow,48);}
- else if(id==='stairs'){for(let i=0;i<5;i++)s+=B(x,y+i*d/5,w,d/5,4,accent,(4-i)*6);s+=B(x,y,w,.4,52,color);s+=text(px,py-55,state.flags.cellarUnlocked?'↘':'⌑',22,C.ink);}
+ else if(id==='stove'){s+=B(x,y,w,d,43,accent);for(const[a,b]of [[3,1],[8,1],[3,3],[8,3]]){const p=face(a,b,44);s+=`<ellipse cx="${p[0]}" cy="${p[1]}" rx="13" ry="7" stroke="${C.coral}" stroke-width="2" fill="${C.coral}" fill-opacity=".2"/>`;}s+=poly([face(3,d,8),face(w-3,d,8),face(w-3,d,32),face(3,d,32)],C.coral,.18)+hingedPanel(x+3,y+d,w-6,24,C.coral,8,open);}
+ else if(id==='milkBowl'){s=bowl(x,y,w,d,color);tag=[px,py-28];}
+ else if(id==='metronome'){s+=poly([face(0,2),face(w,2),face(w/2,2,60)],accent,.25)+line(face(w/2,2,10),face(w/2+1.4,2,52),color,.8,2)+hingedPanel(x+.5,y+2,w-1,18,color,2,open);}
+ else if(id==='hatboxes'){s+=B(x,y,w,d,23,C.lilac)+B(x+1,y+1,w-2,d-1,23,C.coral,24)+B(x+2,y+1,w-4,d-1,16,C.yellow,48);if(open)s+=poly([face(2,1,64),face(w-2,1,64),face(w-2,1.4,86),face(2,1.4,86)],C.yellow,.35)+poly([face(2.4,1.3,63),face(w-2.4,1.3,63),face(w-2.4,d-.4,63),face(2.4,d-.4,63)],C.ink,.2);}
+ else if(id==='stairs'){for(let i=0;i<5;i++)s+=B(x,y+i*d/5,w,d/5,4,accent,(4-i)*6);s+=hingedPanel(x,y,w,52,color,0,open);s+=text(px,py-55,state.flags.cellarUnlocked?'↘':'⌑',22,C.ink);}
  else if(id==='crate'){s+=B(x,y,w,d,44,C.yellow);s+=line(face(0,d,0),face(w,d,44),C.coral,.45,2)+line(face(w,d,0),face(0,d,44),C.coral,.45,2);for(const a of [.6,w-.6])s+=`<circle cx="${face(a,d,0)[0]}" cy="${face(a,d,0)[1]}" r="5" fill="${color}" opacity=".5"/>`;}
  else if(id==='chain'){const a=face(2,2,115),b=face(2,2,20);s+=line(a,b,color,.65,2,'stroke-dasharray="3 4"')+B(x,y+1,w,2,5,color,17);if(state.flags.chainBalanced)s+=itemArt('weight',...face(2,2,28),.7);tag=face(2,2,122);}
  else if(id==='highLatch'){s+=B(x,y,w,.8,5,C.coral,75)+line(face(1,0,77),face(w-1,0,77),C.yellow,.8,4);if(state.flags.latchReleased)s+=text(px,py-80,'✓',18,C.green);tag=face(w/2,0,105);}
- else if(id==='nurseryDoor'){s+=B(x,y,w,1,80,C.lilac)+poly([face(1,1,0),face(w-1,1,0),face(w-1,1,68),face(1,1,68)],C.blue,.22);s+=kitty(...face(w/2,1,19),C.coral,true,0,true);}
+ else if(id==='nurseryDoor'){s=poly([face(0,0),face(w,0),face(w,0,98),face(0,0,98)],C.lilac,.08)+hingedPanel(x,y,w,96,C.lilac,0,state.won);if(!state.won)s+=kitty(...face(w/2,0,19),C.coral,true,0,true);}
  else if(id==='nest'){s+=B(x,y,w,d,15,C.lilac);for(let i=0;i<7;i++)s+=poly([face(i*2,.4,16),face(i*2+3,1,16),face(i*2+2,d,17),face(i*2,d-1,18)],[C.blue,C.coral,C.lilac][i%3],.2);s+=kitty(...face(w/2,d/2,18),C.coral,false,0,true);}
  else s+=B();
- return group(o,s,tag);
+ return group(o,s,tag,`data-open="${open}"`);
 }
 function render({state,scene,cats,pos,room,player}){activeRoom=state.room;const architecture=window.BrambleGeometry.get(activeRoom);const [a,b]=themes[state.room]||themes.foyer,c=C[a],accent=C[b];let s=`<svg class="world-scene" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 660" aria-label="${esc(room.name)}. Click furniture, kittens, and doorways."><defs><filter id="soft-shadow"><feGaussianBlur stdDeviation="5"/></filter><pattern id="paper-grain" width="37" height="29" patternUnits="userSpaceOnUse"><circle cx="8" cy="9" r=".55" fill="#736b53" opacity=".09"/><circle cx="29" cy="24" r=".4" fill="#736b53" opacity=".08"/></pattern></defs><rect width="1000" height="660" fill="url(#paper-grain)" pointer-events="none"/>`;
  s+=text(57,51,'BRAMBLE / '+state.room.toUpperCase(),10,C.ink,'letter-spacing="2" opacity=".55"')+text(939,51,String(Object.keys(themes).indexOf(state.room)+1).padStart(2,'0'),28,accent,'text-anchor="end" style="font-family:Georgia,serif" opacity=".65"');
- s+=shadow(510,550,365,25)+box(0,0,57,22,8,c,-8)+poly([P(0,0),P(57,0),P(57,22),P(0,22)],C.paper,.72);
+ s+=box(0,0,57,22,8,c,-8)+poly([P(0,0),P(57,0),P(57,22),P(0,22)],C.paper,.72);
  // Separate translucent planes multiply together, including the wall/floor intersections.
  s+='<g class="room-walls" data-wall-height="'+architecture.wallHeight+'">'+poly([P(0,0),P(57,0),P(57,0,architecture.wallHeight),P(0,0,architecture.wallHeight)],c,.13)+poly([P(0,0),P(0,22),P(0,22,architecture.wallHeight),P(0,0,architecture.wallHeight)],accent,.12);
  for(const z of [0,12,architecture.wallHeight-8,architecture.wallHeight])s+=line(P(0,0,z),P(57,0,z),c,.55,z===0?2:1.5)+line(P(0,0,z),P(0,22,z),accent,.55,z===0?2:1.5);

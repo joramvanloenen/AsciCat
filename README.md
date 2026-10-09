@@ -10,7 +10,7 @@ The underlying 58 x 23 navigation grid keeps collision, room connections, and en
 
 ## Playing
 
-Select an action, then click an illustrated object: **LOOK AT, USE, PUSH, PULL, OPEN, CLOSE, TALK TO, TAKE, PET, WALK**. Actions automatically approach objects. Hover or keyboard-focus an object for its name. The expandable object list beneath each map offers the same interactions. Furniture, portraits, cupboards, carpets, windows, and kittens all respond.
+Select an action, then click an illustrated object: **LOOK AT, USE, PUSH, PULL, OPEN, CLOSE, TALK TO, TAKE, PET, WALK**. Verb actions automatically run into reach of objects; ordinary floor clicks still walk. Hover or keyboard-focus an object for its name. The expandable object list beneath each map offers the same interactions. Furniture, portraits, cupboards, carpets, windows, and kittens all respond.
 
 The mystery uses environmental puzzles: align turning portraits, slide furniture to reveal recesses, open cupboards, combine supplies, reach a high ledge, play the piano from a pictorial clue, and operate linked cellar mechanisms. There are no cipher puzzles or password forms. Look closely at scenery and talk to kittens for hints. Observations go into the journal.
 
@@ -24,7 +24,7 @@ Select **USE**, click an inventory item, then click its target in the room or an
 - Escape: clear the held item and return to exploration.
 - Touch controls support movement and all verbs.
 
-Walk is the default action on launch and every new night. Dialogue stays in a compact sticky panel above the room; the verb buttons sit directly below it in a sticky action dock. Audio, room objects, clues/progress, and room details collapse until needed. Pockets appear in the dock when Use is selected. Buttons have visible borders, filled backgrounds, and a pressed state. Room hotspots are retained during movement, so hovering labels remain stable. Progress saves locally. The new adventure uses its own save slot; previous cipher-game saves are left intact. Visited rooms can be revisited through the mansion directory.
+Walk is the default action on launch and every new night. Field observations stay in a compact sticky panel above the room; kitten dialogue appears in a separate dismissible speech cloud anchored to its speaker. the verb buttons sit directly below it in a sticky action dock. Room changes fade out and back in, with input held until arrival. Unpressed verbs are coral; the selected verb is teal. Cabinets swing their doors, lids lift, and drawers pull out when opened. Portraits use upright frame proportions. Furniture legs and cabinet feet meet the floor; the room has no cast shadow. Audio, room objects, clues/progress, and room details collapse until needed. Pockets appear in the dock when Use is selected. Buttons have visible borders, filled backgrounds, and a pressed state. Room hotspots are retained during movement, so hovering labels remain stable. Progress saves locally. The new adventure uses its own save slot; previous cipher-game saves are left intact. Visited rooms can be revisited through the mansion directory.
 
 ## Architectural references
 
@@ -58,4 +58,4 @@ Each new night chooses one of seven illustrated characters, saved with the adven
 
 Walking plants the leading foot slightly farther ahead of the body, with a calmer cadence (72 projected pixels per second). Double click or double tap a destination with Walk selected to run; double tap and hold a direction key to run using the keyboard. Running uses longer collision-checked strides, higher knee lift, bent arm swings, and airborne toe-off. A new single click returns to walking.
 
-Run the checks with `node tests/adventure.cjs`, `node tests/room-architecture.cjs`, `node tests/door-orientation.cjs`, `node tests/player-motion.cjs`, `node tests/player-game.cjs`, `node tests/cat-animation.cjs`, and `node tests/audio.cjs`.
+Run the checks with `node tests/adventure.cjs`, `node tests/room-architecture.cjs`, `node tests/door-orientation.cjs`, `node tests/player-motion.cjs`, `node tests/player-game.cjs`, `node tests/cat-animation.cjs`, and `node tests/audio.cjs`, and `node tests/visual-states.cjs`.
