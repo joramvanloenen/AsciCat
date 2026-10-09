@@ -12,8 +12,26 @@ const text=(x,y,s,size=10,c=C.ink,extra='')=>`<text x="${x}" y="${y}" fill="${c}
 function box(x,y,w,d,h,c,z=0){const a=P(x,y,z),b=P(x+w,y,z),e=P(x+w,y+d,z),f=P(x,y+d,z),A=P(x,y,z+h),B=P(x+w,y,z+h),E=P(x+w,y+d,z+h),F=P(x,y+d,z+h);return poly([a,b,e,f],c,.09)+poly([a,b,B,A],c,.14)+poly([b,e,E,B],c,.25)+poly([e,f,F,E],c,.32)+poly([A,B,E,F],c,.16)+line(A,B,c,.75,1.8)+line(B,E,c,.6,1.8)+line(A,F,c,.35);}
 function shadow(x,y,rx=35,ry=13){return `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#54716e" opacity=".10" filter="url(#soft-shadow)" pointer-events="none"/>`;}
 function label(p,name){return `<g class="scene-label" pointer-events="none"><rect x="${p[0]-68}" y="${p[1]-17}" width="136" height="25" rx="12" fill="#fffcf1" fill-opacity=".93"/>${text(p[0],p[1],name,10,C.ink,'text-anchor="middle"')}</g>`;}
-function group(o,s,p){return `<g class="hotspot" data-target="${esc(o.id)}" role="button" tabindex="0" aria-label="${esc(o.name)}"><title>${esc(o.name)}</title>${s}${label(p,o.name)}</g>`;}
-function kitty(x,y,c,small=false,direction=0,asleep=false){const s=small?.65:1;return `<g transform="translate(${x} ${y}) scale(${s})" class="cat-shape">${shadow(0,1,25,8)}${path('M-7 -19 C-45 -12 -42 -49 -27 -42',c,.55,6)}<g class="ink"><path d="M-17 -9 L-19 -35 L-10 -48 L11 -46 L23 -26 L18 -7 Z" fill="${c}" fill-opacity=".28" stroke="${c}" stroke-opacity=".65"/><path d="M-19 -35 L-9 -50 L-12 -69 L2 -61 L13 -64 L25 -73 L28 -51 L22 -37 L2 -33 Z" fill="${c}" fill-opacity=".25" stroke="${c}" stroke-width="1.5"/><path d="M-12 -69 L-8 -56 L2 -61 M25 -73 L19 -56 L13 -64 M2 -33 L2 -61 M2 -33 L-4 -11 L-17 -9 M2 -33 L18 -7" fill="none" stroke="${c}" stroke-opacity=".43"/><path d="M-9 -51 ${asleep?'q4 4 8 -1':'l1 -1'} M13 -54 ${asleep?'q4 4 8 -1':'l1 -1'} M3 -45 l3 2 l3 -4 M-14 -43 l-10 -1 M-14 -39 l-10 3 M17 -44 l13 -5 M18 -40 l12 -1" fill="none" stroke="${C.ink}" stroke-width="${asleep?1.2:2.4}" stroke-linecap="round"/><path d="M-8 -13 L-8 -4 M11 -12 L12 -4" stroke="${c}" stroke-width="4" stroke-linecap="round"/></g>${asleep?text(30,-72,'z',16,c):''}${direction?'<circle cx="-7" cy="-23" r="3" fill="'+c+'" opacity=".6"/>':''}</g>`;}
+function group(o,s,p,extra=''){return `<g class="hotspot" data-target="${esc(o.id)}" role="button" tabindex="0" aria-label="${esc(o.name)}" ${extra}><title>${esc(o.name)}</title>${s}${label(p,o.name)}</g>`;}
+function catMotionStyle(seed,now){
+ const phase=(period,offset)=>(-((now/1000+offset)%period)).toFixed(3)+'s';
+ const head=8.6+seed*.31,blink=5.1+seed*.37,tail=3.1+seed*.13,breath=3.4+seed*.09;
+ return `--head-duration:${head}s;--head-phase:${phase(head,seed*.71)};--blink-duration:${blink}s;--blink-phase:${phase(blink,seed*1.39)};--tail-duration:${tail}s;--tail-phase:${phase(tail,seed*.83)};--breath-duration:${breath}s;--breath-phase:${phase(breath,seed*.47)};--step-phase:${phase(.38,seed*.07)}`;
+}
+function catOffset(p,now=Date.now()){
+ if(!p.movingUntil||now>=p.movingUntil)return [0,0];
+ const t=Math.max(0,Math.min(1,(now-p.moveStarted)/(p.movingUntil-p.moveStarted))),ease=t*t*(3-2*t);
+ const from=P(p.fromX,p.fromY),to=P(p.x,p.y);
+ return [(from[0]-to[0])*(1-ease),(from[1]-to[1])*(1-ease)];
+}
+function kitty(x,y,c,small=false,direction=0,asleep=false,motion=null){
+ const scale=small?.65:1,animated=motion&&!asleep;
+ const body=`<path class="cat-torso" d="M-17 -9 L-19 -35 L-10 -48 L11 -46 L23 -26 L18 -7 Z" fill="${c}" fill-opacity=".28" stroke="${c}" stroke-opacity=".65"/>`;
+ const legs=`<g class="cat-leg cat-leg-back"><path d="M-8 -13 L-8 -4 l-4 1" fill="none" stroke="${c}" stroke-width="4" stroke-linecap="round"/></g><g class="cat-leg cat-leg-front"><path d="M11 -12 L12 -4 l5 -1" fill="none" stroke="${c}" stroke-width="4" stroke-linecap="round"/></g>`;
+ const face=`<g class="cat-head"><path d="M-19 -35 L-9 -50 L-12 -69 L2 -61 L13 -64 L25 -73 L28 -51 L22 -37 L2 -33 Z" fill="${c}" fill-opacity=".25" stroke="${c}" stroke-width="1.5"/><path d="M-12 -69 L-8 -56 L2 -61 M25 -73 L19 -56 L13 -64 M2 -33 L2 -61" fill="none" stroke="${c}" stroke-opacity=".43"/><g class="cat-eyes">${asleep?path('M-9 -51 q4 4 8 -1 M13 -54 q4 4 8 -1',C.ink,.85,1.2):`<ellipse cx="-6" cy="-52" rx="1.7" ry="2.5" fill="${C.ink}"/><ellipse cx="17" cy="-55" rx="1.7" ry="2.5" fill="${C.ink}"/>`}</g><path d="M3 -45 l3 2 l3 -4 M-14 -43 l-10 -1 M-14 -39 l-10 3 M17 -44 l13 -5 M18 -40 l12 -1" fill="none" stroke="${C.ink}" stroke-width="1.4" stroke-linecap="round"/></g>`;
+ const tail=`<g class="cat-tail">${path('M-7 -19 C-45 -12 -42 -49 -27 -42',c,.55,6)}</g>`;
+ return `<g transform="translate(${x} ${y}) scale(${scale})" class="cat-shape${animated?' is-animated':''}${motion?.walking?' is-walking':''}"${animated?' style="'+catMotionStyle(motion.seed,motion.now)+'"':''}>${shadow(0,1,25,8)}<g class="cat-body-motion">${tail}<g class="ink">${body}<path d="M2 -33 L-4 -11 L-17 -9 M2 -33 L18 -7" fill="none" stroke="${c}" stroke-opacity=".43"/>${legs}${face}</g></g>${asleep?text(30,-72,'z',16,c):''}${direction?'<circle cx="-7" cy="-23" r="3" fill="'+c+'" opacity=".6"/>':''}</g>`;
+}
 function itemArt(id,x=0,y=0,size=1){let s='';const c=C.yellow;
  if(id==='crank')s=path('M-15 5 L-15 -7 L3 -7 L3 -22 L15 -22',c,.85,5)+`<circle cx="15" cy="-22" r="5" fill="${C.coral}" fill-opacity=".5"/>`;
  if(id==='key')s=`<circle class="ink" cx="-9" cy="-12" r="8" fill="${c}" fill-opacity=".28" stroke="${c}" stroke-width="3"/>`+path('M-2 -7 L16 7 M10 1 L5 7 M16 7 L11 13',c,.9,4);
@@ -72,7 +90,8 @@ function render({state,scene,cats,pos,room}){const [a,b]=themes[state.room]||the
  if(state.room==='hall')s+=poly([P(20,7,2),P(37,7,2),P(37,16,2),P(20,16,2)],C.lilac,.2);
  if(state.room==='cellar')s+=line(P(23,18),P(46,18),C.yellow,.6,3)+line(P(23,19),P(46,19),C.yellow,.35,1);
  const actors=scene.map(o=>({depth:P(o.x+Math.max(...o.art.map(r=>r.length))/2,o.y+o.art.length)[1]+(o.key||o.item?500:0),html:()=>furniture(o,state)}));
- for(const cat of cats.filter(t=>t.room===state.room)){const p=pos[cat.id],q=P(p.x,p.y);const hue=[C.coral,C.blue,C.yellow,C.green,C.lilac][cats.indexOf(cat)%5];actors.push({depth:q[1],html:()=>group(cat,kitty(q[0],q[1],hue),[q[0],q[1]-88])});}
+ const now=Date.now();
+ for(const cat of cats.filter(t=>t.room===state.room)){const p=pos[cat.id],q=P(p.x,p.y),seed=cats.indexOf(cat),offset=catOffset(p,now);const hue=[C.coral,C.blue,C.yellow,C.green,C.lilac][seed%5];const motion={seed,now,walking:now<(p.movingUntil||0)};actors.push({depth:q[1]+offset[1],html:()=>group(cat,kitty(q[0],q[1],hue,false,0,false,motion),[q[0],q[1]-88],`data-cat-id="${cat.id}" transform="translate(${offset.join(' ')})"`)});}
  const q=P(state.x,state.y);actors.push({depth:q[1]+1,html:()=>`<g class="player" pointer-events="none">${shadow(q[0],q[1],17,7)}<circle cx="${q[0]}" cy="${q[1]}" r="20" fill="none" stroke="${C.blue}" stroke-opacity=".35" stroke-dasharray="2 5"/>${poly([[q[0]-10,q[1]],[q[0]+10,q[1]],[q[0]+7,q[1]-37],[q[0]-7,q[1]-37]],C.blue,.35)}<circle cx="${q[0]}" cy="${q[1]-45}" r="9" fill="${C.blue}" fill-opacity=".35" stroke="${C.blue}" stroke-width="1.3"/></g>`});
  actors.sort((a,b)=>a.depth-b.depth);for(const o of actors)s+=o.html();
  s+=poly([P(0,22),P(57,22),P(57,22,10),P(0,22,10)],accent,.09,'pointer-events="none"')+poly([P(57,0),P(57,22),P(57,22,10),P(57,0,10)],c,.09,'pointer-events="none"');
@@ -82,5 +101,5 @@ function render({state,scene,cats,pos,room}){const [a,b]=themes[state.room]||the
 function unproject(x,y){const X=x-330,Y=y-130,det=10.6*7+11.8*4.8;return {x:Math.round((7*X+11.8*Y)/det),y:Math.round((-4.8*X+10.6*Y)/det)};}
 function icon(id){return `<svg class="item-icon" viewBox="-34 -49 70 76" aria-hidden="true">${itemArt(id)}</svg>`;}
 function cover(){return `<svg viewBox="0 0 600 240" aria-hidden="true" class="cover-art"><g transform="translate(10 -20) scale(.61)">${box(5,3,35,13,80,C.blue)}${box(6,4,8,4,130,C.coral)}${box(26,4,8,4,130,C.lilac)}${box(15,8,10,6,110,C.yellow)}${poly([P(15,8,110),P(25,8,110),P(20,11,190),P(15,14,110),P(25,14,110)],C.coral,.21)}${kitty(...P(33,17),C.green)}</g><g transform="translate(450 155)">${kitty(0,0,C.coral)}</g></svg>`;}
-window.BrambleVisuals={render,project:P,unproject,icon,cover};
+window.BrambleVisuals={render,project:P,unproject,icon,cover,catOffset,catMotionStyle};
 })();

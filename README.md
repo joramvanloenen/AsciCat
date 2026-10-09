@@ -26,6 +26,10 @@ Select **USE**, click an inventory item, then click its target in the room or an
 
 Dialogue and verbs stay above the map in a sticky interaction panel. Progress saves locally. The new adventure uses its own save slot; previous cipher-game saves are left intact. Visited rooms can be revisited through the mansion directory.
 
+## Kitten animation
+
+Kittens wander with smooth projected steps and alternating paws. Separate SVG layers animate their head tilts, eye blinks, breathing, and tail swishes. Each kitten has different timing, preserved across scene redraws. Click targets and name labels move with the kitten. Portrait illustrations remain still. Reduced-motion preferences disable the animated poses and sliding steps.
+
 ## Audio
 
 Browser speech synthesis gives kittens distinct pitch and pace profiles. Procedural Web Audio supplies meows, purrs, footsteps, doors, discoveries, piano notes, and mansion ambience. Kittens meow before and after dialogue, and occasionally while idle in the current room. If speech synthesis is unavailable or muted, the dialogue meows still work with SFX enabled.
