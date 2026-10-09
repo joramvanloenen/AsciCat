@@ -20,3 +20,6 @@
 @keyframes cat-step-bob{0%,50%,100%{transform:translateY(0)}25%,75%{transform:translateY(-1.8px)}}
 @keyframes cat-step{0%,100%{transform:rotate(-17deg)}50%{transform:rotate(17deg)}}
 @media(prefers-reduced-motion:reduce){.is-animated .cat-head,.is-animated .cat-eyes,.is-animated .cat-tail,.is-animated .cat-torso,.is-walking .cat-body-motion,.is-walking .cat-leg{animation:none!important}}
+
+/* Paper cut characters keep translucent color layers within their silhouettes. */
+.player-figure{mix-blend-mode:multiply}.player-rig{pointer-events:none}
