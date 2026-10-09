@@ -21,37 +21,52 @@ function anatomy(pose){
  assert(Math.abs(left+right)<1e-7,'Arms should swing in opposite directions');
 }
 let frames=0;
-for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){
+for(const running of [false,true])for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){
  const motion=player.create('foyer',20,12);let now=1000,swing=1;
+ const stride=running?2:1;
  for(let step=1;step<=10;step++){
   const before=motion.sample(now),support=before.feet[1-swing];
-  assert(motion.stepTo(20+step*dx,12+step*dy,now));
-  assert(!motion.stepTo(20+step*dx,12+step*dy,now+1),'Cannot interrupt a planted step');
-  for(let elapsed=0;elapsed<=200;elapsed+=5){
+  assert(motion.stepTo(20+step*dx*stride,12+step*dy*stride,now,{running}));
+  assert(!motion.stepTo(20+step*dx*stride,12+step*dy*stride,now+1),'Cannot interrupt a planted step');
+  let airborne=false;
+  for(let elapsed=0;elapsed<=190;elapsed+=5){
    const pose=motion.sample(now+elapsed),foot=pose.feet[1-swing];
-   assert.equal(foot.x,support.x,'Stance foot cannot slide sideways');
-   assert.equal(foot.y,support.y,'Stance foot cannot slide in depth');
-   assert.equal(foot.lift,0,'Stance foot must remain on the floor');
+   if(foot.lift===0){
+    assert.equal(foot.x,support.x,'A foot on the floor cannot slide sideways');
+    assert.equal(foot.y,support.y,'A foot on the floor cannot slide in depth');
+   }
+   if(running&&pose.feet.every(f=>f.lift>0))airborne=true;
    anatomy(pose);frames++;
   }
-  const end=motion.sample(now+270);anatomy(end);
+  if(running)assert(airborne,'Running needs an airborne phase');
+  const end=motion.sample(now+195);anatomy(end);
   assert(end.feet[swing].lift<1e-6,'Swing foot must land');
-  assert.equal(motion.drainFootfalls(),1,'Exactly one footfall per step');
+  const initial=player.rest(20,12).root,target=player.rest(20+step*dx*stride,12+step*dy*stride).root;
+  const direction=target.map((v,i)=>v-initial[i]),length=Math.hypot(...direction);
+  const lead=(end.feet[swing].x-end.root[0])*(direction[0]/length)+(end.feet[swing].y-end.root[1])*(direction[1]/length);
+  assert(lead>3,'Leading foot must plant visibly ahead of the body');
+  assert.equal(motion.drainFootfalls(),1,'Exactly one footfall per stride');
   assert.equal(motion.drainFootfalls(),0,'A redraw cannot replay the footfall');
-  now+=270;swing=1-swing;
+  now+=200;swing=1-swing;
  }
- const stopped=motion.sample(now+1000),rest=player.rest(20+10*dx,12+10*dy);
+ const stopped=motion.sample(now+1000),rest=player.rest(20+10*dx*stride,12+10*dy*stride);
  assert(!stopped.walking);anatomy(stopped);
  for(let i=0;i<2;i++){
   assert(Math.abs(stopped.feet[i].x-rest.feet[i].x)<.001);
   assert(Math.abs(stopped.feet[i].y-rest.feet[i].y)<.001);
+  assert.equal(stopped.feet[i].lift,0);
  }
 }
 const turning=player.create('foyer',20,12);
-assert(turning.stepTo(21,12,1000));const contact=turning.sample(1270).feet[1];
-assert(turning.stepTo(21,11,1270));
-assert.equal(turning.sample(1400).feet[1].x,contact.x,'Turning must retain the planted foot');
-assert.equal(turning.sample(1400).feet[1].y,contact.y);
+assert(turning.stepTo(21,12,1000));const contact=turning.sample(1190).feet[1];
+assert(turning.stepTo(21,11,1190));
+assert.equal(turning.sample(1240).feet[1].x,contact.x,'Turning must retain the planted foot');
+assert.equal(turning.sample(1240).feet[1].y,contact.y);
+const fast=player.create('foyer',20,12),runner=player.create('foyer',20,12);
+fast.stepTo(21,12,1000);runner.stepTo(21,12,1000,{running:true});
+assert(!runner.sample(1115).walking,'Running should cover a tile faster than walking');
+assert(fast.sample(1115).walking);
+assert(!fast.sample(1190).walking,'Walking must finish a tile in under 190 ms');
 const reduced=player.create('foyer',20,12,{reduced:true});
 assert(reduced.stepTo(21,12,1000));assert(!reduced.busy(1001));assert(!reduced.sample(1001).walking);
 turning.sync('library',29,20);assert.deepEqual(Array.from(turning.sample(2000).root),Array.from(player.rest(29,20).root));
@@ -61,4 +76,4 @@ for(const style of player.styles){
  assert(art.includes('data-style="'+style.id+'"'));
  assert(!/NaN|undefined/.test(art));
 }
-console.log(`PASS: ${frames} gait frames in all four directions, fixed stance feet, invariant limb lengths, opposed arm swings, landing sounds, turns, closing steps, room resets, reduced motion, and seven character styles.`);
+console.log(`PASS: ${frames} walk/run gait frames in all four directions, fixed stance feet, invariant limb lengths, opposed arm swings, landing sounds, turns, closing steps, room resets, reduced motion, and seven character styles.`);

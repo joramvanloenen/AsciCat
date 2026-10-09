@@ -16,41 +16,52 @@ const ease=t=>t*t*t*(t*(t*6-15)+10);
 const mix=(a,b,t)=>a+(b-a)*t;
 const copy=f=>({...f});
 const restFeet=root=>[-1,1].map(side=>({x:root[0]+side*4,y:root[1]+side*.9,lift:0,angle:0}));
-function rest(x,y,now=0,facing=1){return {root:project(x,y),feet:restFeet(project(x,y)),facing,bob:0,balance:0,arm:0,lean:0,walking:false,now};}
+function rest(x,y,now=0,facing=1){return {root:project(x,y),feet:restFeet(project(x,y)),facing,bob:0,balance:0,arm:0,lean:0,walking:false,running:false,now};}
 
 // Feet are stored in room coordinates. Root movement never moves a planted foot.
-// A grid step is one alternating footfall, followed by a lifted closing step
+// A stride is one alternating footfall, followed by lifted closing steps
 // only when the player actually stops; turns retain the existing contact points.
 function create(room,x,y,{enabled=true,reduced=false}={}){
  let target={room,x,y},pose=rest(x,y),motion=null,settle=null,nextFoot=1,lastEnd=-Infinity,contacts=0;
  function sample(now=Date.now()){
   if(motion){
-   const t=clamp((now-motion.start)/motion.duration),u=ease(t),s=clamp((t-.12)/.74),v=ease(s);
+   const t=clamp((now-motion.start)/motion.duration),u=ease(t),s=clamp((t-.04)/.72),v=ease(s);
    const feet=motion.feet.map(copy),foot=feet[motion.swing];
    foot.x=mix(motion.feet[motion.swing].x,motion.toFoot.x,v);
    foot.y=mix(motion.feet[motion.swing].y,motion.toFoot.y,v);
-   foot.lift=s>0&&s<1?Math.sin(Math.PI*s)*7:0;
-   foot.angle=s>0&&s<1?Math.sin(2*Math.PI*s)*-11:0;
+   foot.lift=mix(motion.feet[motion.swing].lift,0,v)+(s>0&&s<1?Math.sin(Math.PI*s)*(motion.running?13:8):0);
+   foot.angle=s>0&&s<1?Math.sin(2*Math.PI*s)*-15:0;
+   // A runner releases the trailing foot at toe-off. It can move only once
+   // airborne, then remains lifted ready for the next alternating stride.
+   if(motion.running&&t>.44){
+    const trail=feet[1-motion.swing],q=clamp((t-.44)/.56),w=ease(q),end=motion.trailFoot;
+    trail.x=mix(motion.feet[1-motion.swing].x,end.x,w);
+    trail.y=mix(motion.feet[1-motion.swing].y,end.y,w);
+    trail.lift=Math.sin(q*Math.PI/2)*7;trail.angle=-22*Math.sin(q*Math.PI/2);
+   }
    const root=motion.from.map((n,i)=>mix(n,motion.to[i],u)),support=feet[1-motion.swing];
    const singleSupport=Math.sin(Math.PI*t);
-   pose={root,feet,facing:pose.facing,bob:-1.5*singleSupport,
+   pose={root,feet,facing:pose.facing,bob:-(motion.running?3.5:1.5)*singleSupport,
     balance:Math.max(-1.8,Math.min(1.8,(support.x-root[0])*.15))*singleSupport,
-    arm:Math.sin(Math.PI*t)*(motion.swing===1?1:-1),lean:pose.facing*1.2*singleSupport,walking:true,now};
-   if(t>=.86&&!motion.landed){motion.landed=true;contacts++;}
+    arm:Math.sin(Math.PI*t)*(motion.swing===1?1:-1),lean:pose.facing*(motion.running?3:1.2)*singleSupport,walking:true,running:motion.running,now};
+   if(t>=.76&&!motion.landed){motion.landed=true;contacts++;}
    if(t>=1){lastEnd=motion.start+motion.duration;nextFoot=1-motion.swing;motion=null;pose.walking=false;}
   }
-  if(!motion&&!settle&&now-lastEnd>75){
-   const ideal=restFeet(pose.root),index=nextFoot;
-   if(Math.hypot(pose.feet[index].x-ideal[index].x,pose.feet[index].y-ideal[index].y)>.05){
-    settle={start:lastEnd+75,duration:160,index,from:copy(pose.feet[index]),to:ideal[index]};
+  for(let closing=0;closing<2&&!motion;closing++){
+   if(!settle&&now-lastEnd>75){
+    const ideal=restFeet(pose.root),needs=i=>Math.hypot(pose.feet[i].x-ideal[i].x,pose.feet[i].y-ideal[i].y)>.05||pose.feet[i].lift>.05;
+    const index=needs(nextFoot)?nextFoot:1-nextFoot;
+    if(needs(index)){
+     settle={start:lastEnd+75,duration:160,index,from:copy(pose.feet[index]),to:ideal[index]};
+    }
    }
-  }
-  if(settle){
-   const t=clamp((now-settle.start)/settle.duration),u=ease(t),foot=pose.feet[settle.index];
-   foot.x=mix(settle.from.x,settle.to.x,u);foot.y=mix(settle.from.y,settle.to.y,u);
-   foot.lift=t>0&&t<1?Math.sin(Math.PI*t)*4:0;foot.angle=0;
-   pose.walking=true;pose.arm=0;pose.bob=-.5*Math.sin(Math.PI*t);pose.balance=(settle.index===0?1:-1)*Math.sin(Math.PI*t);
-   if(t>=1){settle=null;pose.walking=false;pose.bob=pose.balance=pose.lean=0;}
+   if(settle){
+    const t=clamp((now-settle.start)/settle.duration),u=ease(t),foot=pose.feet[settle.index];
+    foot.x=mix(settle.from.x,settle.to.x,u);foot.y=mix(settle.from.y,settle.to.y,u);
+    foot.lift=mix(settle.from.lift,0,u)+(t>0&&t<1?Math.sin(Math.PI*t)*4:0);foot.angle=mix(settle.from.angle,0,u);
+    pose.walking=true;pose.running=false;pose.arm=0;pose.bob=-.5*Math.sin(Math.PI*t);pose.balance=(settle.index===0?1:-1)*Math.sin(Math.PI*t);
+    if(t>=1){lastEnd=settle.start+settle.duration-75;settle=null;pose.walking=false;pose.bob=pose.balance=pose.lean=0;}else break;
+   }else break;
   }
   pose.now=now;
   return {...pose,root:pose.root.slice(),feet:pose.feet.map(copy)};
@@ -61,14 +72,20 @@ function create(room,x,y,{enabled=true,reduced=false}={}){
   sync(newRoom,nx,ny){if(target.room!==newRoom||target.x!==nx||target.y!==ny)reset(newRoom,nx,ny);},
   reset,
   busy(now=Date.now()){sample(now);return !!(motion||settle);},
-  stepTo(nx,ny,now=Date.now()){
+  stepTo(nx,ny,now=Date.now(),{running=false}={}){
    sample(now);if(motion||settle)return false;
    const to=project(nx,ny),dx=to[0]-pose.root[0];
    if(Math.abs(dx)>.1)pose.facing=dx<0?-1:1;
    target.x=nx;target.y=ny;
    if(!enabled||reduced){pose=rest(nx,ny,now,pose.facing);return true;}
    const distance=Math.hypot(to[0]-pose.root[0],to[1]-pose.root[1]);
-   motion={start:now,duration:Math.max(200,Math.min(280,distance/55*1000)),from:pose.root.slice(),to,feet:pose.feet.map(copy),swing:nextFoot,toFoot:restFeet(to)[nextFoot],landed:false};
+   const unit=to.map((n,i)=>(n-pose.root[i])/Math.max(.001,distance)),toFoot=restFeet(to)[nextFoot],trailFoot=restFeet(to)[1-nextFoot];
+   // Plant ahead of the pelvis: the body advances over this exact contact
+   // during the following stride instead of pulling the shoe along the floor.
+   const lead=running?12:8;
+   toFoot.x+=unit[0]*lead;toFoot.y+=unit[1]*lead;
+   trailFoot.x-=unit[0]*5;trailFoot.y-=unit[1]*5;
+   motion={start:now,duration:running?Math.max(110,Math.min(200,distance/150*1000)):Math.max(135,Math.min(190,distance/85*1000)),from:pose.root.slice(),to,feet:pose.feet.map(copy),swing:nextFoot,toFoot,trailFoot,running,landed:false};
    return true;
   },
   drainFootfalls(){const n=contacts;contacts=0;return n;},
@@ -98,8 +115,8 @@ function rig(pose){
  for(let i=0;i<2;i++){
   const side=i===0?-1:1,foot=pose.feet[i],a=[hip[0]+side*3.5,hip[1]],b=[foot.x-pose.root[0],foot.y-pose.root[1]-foot.lift-3];
   legs.push({hip:a,knee:joint(a,b,20,20,-pose.facing),ankle:b,foot:[b[0],b[1]+3],angle:foot.angle});
-  const shoulder=[body[0]+side*10,body[1]-24],swing=-pose.arm*side*pose.facing*5;
-  const wrist=[body[0]+side*13+swing,body[1]+5-Math.abs(swing)*.3];
+  const shoulder=[body[0]+side*10,body[1]-24],swing=-pose.arm*side*pose.facing*(pose.running?9:5);
+  const wrist=[body[0]+side*13+swing,body[1]+(pose.running?-3:5)-Math.abs(swing)*.3];
   arms.push({shoulder,elbow:joint(shoulder,wrist,15,15,-side),wrist});
  }
  return {hip,body,legs,arms,head:[body[0]+pose.lean*.3,body[1]-39]};
@@ -145,7 +162,7 @@ function draw(styleId,pose){
  const blink=(pose.now%6100)>5790&&(pose.now%6100)<5940;
  const face=`<path d="M-7 -11 Q0 -15 7 -11 L6 5 Q0 10 -6 5 Z" fill="${style.skin}" fill-opacity=".96" stroke="${ink}" stroke-width=".8"/><path d="M1 -4 l3 4 H1 M-2 3 q3 2 5 -1" fill="none" stroke="${ink}" stroke-width=".75"/>${[-3,4].map(x=>`<ellipse cx="${x}" cy="-5" rx=".7" ry="${blink?.12:1.05}" fill="${ink}"/>`).join('')}${style.id==='vest'?'<g fill="none" stroke="#315e68" stroke-width=".75"><circle cx="-3" cy="-5" r="2.7"/><circle cx="4" cy="-5" r="2.7"/><path d="M0 -5 H1"/></g>':''}${style.id==='checks'?'<path d="M-4 1 Q0 -4 2 1 Q5 -2 5 2" fill="#315e68"/>':''}`;
  const head=`<g class="player-head" transform="translate(${pt(r.head)}) rotate(${pose.lean*.7}) scale(${facing} 1)"><path d="M-3 5 V13 H3 V5" fill="${style.skin}" stroke="${ink}" stroke-width=".7"/><g fill="${style.hair}" fill-opacity=".92">${hair}</g>${face}${style.id==='vest'?'':`<g fill="${style.hair}" fill-opacity=".92">${hair}</g>`}</g>`;
- return `<title>You — ${style.name}</title><defs><clipPath id="player-shirt-clip"><path d="${torso}"/></clipPath><pattern id="player-dots" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="${ink}"/></pattern></defs><g class="player-rig" data-style="${style.id}" data-walking="${pose.walking}" transform="translate(${pt(pose.root)})"><ellipse rx="16" ry="6" fill="${ink}" opacity=".10"/><ellipse rx="18" ry="8" fill="none" stroke="#3b9ebc" stroke-opacity=".45" stroke-dasharray="2 4" stroke-width="1"/><g class="player-figure">${arm(facing>0?0:1)}${legs}${clothes}${arm(facing>0?1:0)}${head}</g></g>`;
+ return `<title>You — ${style.name}</title><defs><clipPath id="player-shirt-clip"><path d="${torso}"/></clipPath><pattern id="player-dots" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="${ink}"/></pattern></defs><g class="player-rig" data-style="${style.id}" data-walking="${pose.walking}" data-running="${pose.running}" transform="translate(${pt(pose.root)})"><ellipse rx="16" ry="6" fill="${ink}" opacity=".10"/><ellipse rx="18" ry="8" fill="none" stroke="#3b9ebc" stroke-opacity=".45" stroke-dasharray="2 4" stroke-width="1"/><g class="player-figure">${arm(facing>0?0:1)}${legs}${clothes}${arm(facing>0?1:0)}${head}</g></g>`;
 }
 window.BramblePlayer={styles,randomStyle:()=>styles[Math.floor(Math.random()*styles.length)].id,isStyle:id=>styles.some(s=>s.id===id),create,rest,rig,joint,draw};
 })();

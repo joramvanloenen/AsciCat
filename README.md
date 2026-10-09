@@ -51,3 +51,5 @@ GitHub Pages publishes from **main**, **/ (root)**. `index.html`, `style.css`, `
 ## Player character
 
 Each new night chooses one of seven illustrated characters, saved with the adventure. Room-space foot anchors remain fixed throughout stance. Alternating lifted steps, two-segment leg/arm joints, weight transfer, and a lifted closing step bring the character naturally to rest. Footfall sounds follow landing. The renderer updates the player alone between tiles and retains the current gait through room redraws. Reduced motion keeps the same character with immediate movement.
+
+Walking now plants the leading foot ahead of the body and is about 55% faster. Double click or double tap a destination with Walk selected to run; double tap and hold a direction key to run using the keyboard. Running uses longer collision-checked strides, higher knee lift, bent arm swings, and airborne toe-off. A new single click returns to walking.
