@@ -150,6 +150,29 @@ add('cellar','chain','Hanging chain',43,5,['   |','   |','  ( )','  / \\'],'A co
 add('cellar','highLatch','High latch',29,3,['[LATCH]'],'A latch above the nursery door, too high for your hands. Its linkage runs to the floor plate and hanging chain.');
 add('cellar','nurseryDoor','Nursery door',25,7,['█▀▀▀▀▀▀▀▀█','█ /\\_/\\ █','█    ■   █','█▄▄▄▄▄▄▄▄█'],'A small door. Three catches hold it closed: the floor plate, the counterbalance, and the high latch. A kitten snores behind it.');
 add('vault','nest','Scarf nest',19,7,['  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄','▄▀ BLUE SCARF NEST ▀▄','█       /\\_/\\       █','█      ( u.u )      █','█       > ^ <       █','▀▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▀'],'Nine kittens in a nest of borrowed scarves. Button is curled into a comma.');
+// Layouts follow rectangular country-house rooms: wall storage, central
+// dining furniture, a window-side reading group, and a bed against a wall.
+D.footprint=o=>o.size||[Math.max(...o.art.map(r=>r.length)),o.art.length];
+const placements={clock:[6,0,9,4],familyPortrait:[39,0,14,1],umbrella:[3,16,4,3],bookcase:[5,0,11,3],desk:[26,13,12,3],readingChair:[43,12,5,4],curtain:[47,0,9,1],table:[17,8,24,6],sideboard:[42,0,10,3],dinnerPortrait:[6,0,12,1],cupboard:[36,0,15,3],stove:[6,0,17,4],milkBowl:[13,16,7,3],westPortrait:[5,0,13,1],centerPortrait:[22,0,10,1],eastPortrait:[44,0,10,1],piano:[7,8,19,6],moonKey:[10,13,3,1],eyeKey:[15,13,3,1],whiskerKey:[20,13,3,1],musicPortrait:[37,0,16,1],metronome:[42,14,4,3],bed:[34,1,13,10],wardrobe:[7,0,11,3],rug:[20,12,24,6],chest:[6,1,13,4],hatboxes:[42,1,11,5],trunk:[6,16,9,4],highWindow:[25,0,13,1],fernPot:[3,4,10,5],ivy:[47,15,5,4],bottles:[5,0,12,4],nurseryDoor:[25,0,8,1],highLatch:[28,0,2,1]};
+for(const o of D.objects){if(placements[o.id]){const [x,y,w,d]=placements[o.id];o.x=x;o.y=y;o.size=[w,d];}if(o.id.includes('Portrait')||o.id==='curtain'||o.id==='highWindow')o.wall='n';}
+const decor=(room,id,name,x,y,w,d,kind,look,extra={})=>add(room,id,name,x,y,['■'],look,{size:[w,d],kind,...extra});
+decor('foyer','hallConsole','Hall console',18,0,7,3,'console','A narrow console for letters and keys. Someone has left nine tiny calling cards.');
+decor('hall','hallSettle','Hall settle',4,2,13,3,'bench','A long seat beside the wall. Its cushion is thoroughly flattened by generations of kittens.');
+decor('library','libraryHearth','Library fireplace',35,0,11,3,'fireplace','A tiled fireplace with a carved mantel. The hearth is cold; the reading chairs have migrated toward it.');
+decor('library','readingTable','Tea table',37,12,4,3,'smallTable','A cup rests beside a book entitled A Brief History of the Fish.');
+decor('library','readingRug','Reading rug',35,9,17,9,'rug','A patterned rug gathers the reading chair and tea table into a cozy corner.',{walkable:true});
+for(const [i,x]of [18,24,30,36].entries())decor('dining','diningChairBack'+i,'Dining chair '+(i+1),x,5,3,2,'chair','A carved dining chair, pulled far enough back to leave room for a tail.');
+for(const [i,x]of [19,27,35].entries())decor('dining','diningChairFront'+i,'Dining chair '+(i+5),x,16,3,2,'chair','A carved dining chair. The seat bears the exact impression of a sleeping kitten.');
+for(const [i,x]of [12,44].entries())decor('dining','diningChairEnd'+i,'Dining chair '+(i+8),x,10,3,3,'chair','An end chair for a particularly important kitten.');
+decor('kitchen','prepTable','Preparation table',26,10,11,4,'console','A worktable dusted with flour. A rolling pin has acquired a small pawprint.');
+decor('bedroom','leftNightstand','Left bedside table',29,1,4,3,'console','A bedside table with a candle and a neatly folded blue scarf.');
+decor('bedroom','rightNightstand','Right bedside table',49,1,4,3,'console','A bedside table. Its drawer contains a perfectly ordinary spare pillowcase.',{openable:true,inside:'One spare pillowcase. No kitten, although there is enough fur to assemble one.'});
+decor('bedroom','bedroomChair','Bedroom chair',7,14,5,4,'chair','An upholstered chair beside the wardrobe. Someone has claimed the cushion.');
+decor('music','pianoBench','Piano bench',10,17,13,2,'bench','A low bench centered on the keyboard, with room to sit and play.');
+decor('vault','nurseryRug','Nursery rug',16,6,27,13,'rug','A soft rug surrounds the nest of borrowed scarves.',{walkable:true});
+D.rooms.gallery.doorPositions={n:[37,0]};
+D.rooms.library.doorPositions={n:[31,0]};
+for(const o of D.objects){if(o.id.includes('diningChairFront'))o.facing='n';if(o.id==='diningChairEnd0')o.facing='e';if(o.id==='diningChairEnd1')o.facing='w';}
 D.cats=[
 {id:'pip',name:'Pip',glyph:'a',room:'foyer',x:34,y:12,pet:'Pip rolls onto his back. It is, of course, a trap. A very soft trap.'},
 {id:'ink',name:'Ink',glyph:'b',room:'library',x:34,y:11,pet:'Ink accepts your tribute with the dignity of a tiny librarian.'},

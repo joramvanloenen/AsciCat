@@ -9,7 +9,7 @@ function game(storage,random){
  for(const match of fs.readFileSync(path.join(root,'index.html'),'utf8').matchAll(/id="([^"]+)"/g))elements[match[1]]=new Element(match[1]);
  const panels=['play','inventory','journal','atlas'].map(n=>{const e=new Element();e.dataset.panel=n;return e;});
  const sandbox={window:{addEventListener(){}},document:{hidden:false,getElementById:id=>elements[id],querySelector:()=>Object.values(elements).find(e=>e.open),querySelectorAll:q=>q.includes('data-verb')?elements.verbs.children:q.includes('move')?[]:panels,createElement:tag=>new Element(tag),addEventListener(n,f){keys[n]=f;}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},setInterval(f,period){intervals.set(period,f);},setTimeout(){},clearTimeout(){},requestAnimationFrame(){},Date:class extends Date{static now(){return now;}},Math:Object.assign(Object.create(Math),{random:()=>random}),console};
- for(const file of ['audio.js','adventure-data.js','player.js','visuals.js'])vm.runInNewContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox);
+ for(const file of ['audio.js','adventure-data.js','geometry.js','player.js','visuals.js'])vm.runInNewContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox);
  const code=fs.readFileSync(path.join(root,'game.js'),'utf8').replace(/\}\)\(\);\s*$/,`window.test={get state(){return state},get verb(){return verb},get route(){return route},get scene(){return scene},move,approach,playerMotion,travel,start,selectVerb,render};})();`);
  vm.runInNewContext(code,sandbox);
  return {t:sandbox.window.test,e:elements,tick(ms=25){now+=ms;intervals.get(25)();},key(key,repeat=false){keys.keydown({key,repeat,target:{matches:()=>false},preventDefault(){}});},now:()=>now};
@@ -54,16 +54,16 @@ for(let n=0;n<10&&held.t.state.x===30;n++)held.tick();
 assert(!held.t.playerMotion.sample(held.now()).running,'Keyboard auto-repeat must not count as a double tap');
 for(const secondDetail of [2,1]){
  const pointer=game(new Map(),0);pointer.t.start();pointer.t.selectVerb('walk');
- const click=detail=>pointer.e.screen.onclick({clientX:528.6,clientY:466.8,detail,target:{closest:()=>null}});
+ const click=detail=>pointer.e.screen.onclick({clientX:462.1,clientY:488.1,detail,target:{closest:()=>null}});
  click(1);pointer.tick(50);click(secondDetail);
  for(let n=0;n<20&&!pointer.t.playerMotion.sample(pointer.now()).running;n++)pointer.tick();
  assert(pointer.t.playerMotion.sample(pointer.now()).running,'Double click/touch taps should run to the destination');
  for(let n=0;n<500&&(pointer.t.route.length||pointer.t.playerMotion.busy(pointer.now()));n++)pointer.tick();
  assert.equal(pointer.t.state.x,41);assert.equal(pointer.t.state.y,20);
- pointer.e.screen.onclick({clientX:433.2,clientY:423.6,detail:1,target:{closest:()=>null}});
+ pointer.e.screen.onclick({clientX:388.3,clientY:451.2,detail:1,target:{closest:()=>null}});
  pointer.tick();assert(!pointer.t.playerMotion.sample(pointer.now()).running,'A new single click returns to walking');
 }
-const collision=game(new Map(),0);collision.t.start();collision.t.state.x=4;collision.t.state.y=4;collision.t.render();
+const collision=game(new Map(),0);collision.t.start();collision.t.state.x=4;collision.t.state.y=2;collision.t.render();
 assert(collision.t.move(1,0,true));assert.equal(collision.t.state.x,5,'Running cannot skip an intervening furniture tile');
 collision.tick(1000);assert(!collision.t.move(1,0,true));assert.equal(collision.t.state.x,5);
 console.log('PASS: smooth movement integration, double click/touch tap/key running, single-click walking, collision-checked strides, buffered keyboard input, interaction after landing, persistent randomized appearance, new-night selection, and save migration.');

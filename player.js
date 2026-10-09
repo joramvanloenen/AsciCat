@@ -10,19 +10,19 @@ const styles=[
  {id:'vest',name:'The botanist',top:'#83b86c',legs:'#dda0b7',skin:'#dda0b7',hair:'#283c40',shoes:'#283c40',pattern:'vest',skirt:true},
  {id:'stars',name:'The stargazer',top:'#de6554',legs:'#283c40',skin:paper,hair:'#283c40',shoes:'#73b7ba',pattern:'stars'}
 ];
-const project=(x,y)=>[330+x*10.6-y*11.8,130+x*4.8+y*7];
+const project=(x,y,room='foyer')=>window.BrambleGeometry.project(x,y,0,room);
 const clamp=v=>Math.max(0,Math.min(1,v));
 const ease=t=>t*t*t*(t*(t*6-15)+10);
 const mix=(a,b,t)=>a+(b-a)*t;
 const copy=f=>({...f});
 const restFeet=root=>[-1,1].map(side=>({x:root[0]+side*4,y:root[1]+side*.9,lift:0,angle:0}));
-function rest(x,y,now=0,facing=1){return {root:project(x,y),feet:restFeet(project(x,y)),facing,bob:0,balance:0,arm:0,lean:0,walking:false,running:false,now};}
+function rest(x,y,now=0,facing=1,room='foyer'){return {root:project(x,y,room),feet:restFeet(project(x,y,room)),facing,bob:0,balance:0,arm:0,lean:0,walking:false,running:false,now};}
 
 // Feet are stored in room coordinates. Root movement never moves a planted foot.
 // A stride is one alternating footfall, followed by lifted closing steps
 // only when the player actually stops; turns retain the existing contact points.
 function create(room,x,y,{enabled=true,reduced=false}={}){
- let target={room,x,y},pose=rest(x,y),motion=null,settle=null,nextFoot=1,lastEnd=-Infinity,contacts=0;
+ let target={room,x,y},pose=rest(x,y,0,1,room),motion=null,settle=null,nextFoot=1,lastEnd=-Infinity,contacts=0;
  function sample(now=Date.now()){
   if(motion){
    const t=clamp((now-motion.start)/motion.duration),u=ease(t),s=clamp((t-.04)/.72),v=ease(s);
@@ -66,7 +66,7 @@ function create(room,x,y,{enabled=true,reduced=false}={}){
   pose.now=now;
   return {...pose,root:pose.root.slice(),feet:pose.feet.map(copy)};
  }
- function reset(newRoom,nx,ny){target={room:newRoom,x:nx,y:ny};pose=rest(nx,ny,Date.now(),pose.facing);motion=settle=null;lastEnd=-Infinity;contacts=0;nextFoot=1;}
+ function reset(newRoom,nx,ny){target={room:newRoom,x:nx,y:ny};pose=rest(nx,ny,Date.now(),pose.facing,newRoom);motion=settle=null;lastEnd=-Infinity;contacts=0;nextFoot=1;}
  return {
   sample,
   sync(newRoom,nx,ny){if(target.room!==newRoom||target.x!==nx||target.y!==ny)reset(newRoom,nx,ny);},
@@ -74,10 +74,10 @@ function create(room,x,y,{enabled=true,reduced=false}={}){
   busy(now=Date.now()){sample(now);return !!(motion||settle);},
   stepTo(nx,ny,now=Date.now(),{running=false}={}){
    sample(now);if(motion||settle)return false;
-   const to=project(nx,ny),dx=to[0]-pose.root[0];
+   const to=project(nx,ny,target.room),dx=to[0]-pose.root[0];
    if(Math.abs(dx)>.1)pose.facing=dx<0?-1:1;
    target.x=nx;target.y=ny;
-   if(!enabled||reduced){pose=rest(nx,ny,now,pose.facing);return true;}
+   if(!enabled||reduced){pose=rest(nx,ny,now,pose.facing,target.room);return true;}
    const distance=Math.hypot(to[0]-pose.root[0],to[1]-pose.root[1]);
    const unit=to.map((n,i)=>(n-pose.root[i])/Math.max(.001,distance)),toFoot=restFeet(to)[nextFoot],trailFoot=restFeet(to)[1-nextFoot];
    // Plant ahead of the pelvis: the body advances over this exact contact

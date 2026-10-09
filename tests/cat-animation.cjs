@@ -3,7 +3,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const context = {window:{}};
-for (const file of ['adventure-data.js', 'visuals.js']) {
+for (const file of ['adventure-data.js','geometry.js', 'visuals.js']) {
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), context);
 }
 const v = context.window.BrambleVisuals;

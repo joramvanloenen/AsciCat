@@ -1,12 +1,12 @@
 # AsciCat
 
-**The House of Small Secrets** is a browser-based terminal point-and-click adventure in Bramble House. Nine kittens live here; only eight came to dinner. Explore twelve rooms, uncover physical clues, and find the missing kitten beneath the cellar.
+**The House of Small Secrets** is a browser-based point-and-click adventure in Bramble House. Nine kittens live here; only eight came to dinner. Explore twelve rooms, uncover physical clues, and find the missing kitten beneath the cellar.
 
 Play: https://joramvanloenen.github.io/AsciCat/
 
 The world is illustrated with procedural isometric SVG: translucent architectural planes, faceted kittens, recognizable furniture, and individually drawn inventory objects. Coral, cyan, yellow, sage, and lilac inks multiply where their transparent layers overlap. Delicate contour bands, registration marks, and paper grain draw on the supplied design references. The interface shares the warm paper palette and overlapping color language.
 
-The underlying 58 x 23 navigation grid keeps collision, room connections, and environmental puzzle behavior consistent. It is never rendered as character art. No sprites, external images, fonts, frameworks, or runtime dependencies are needed.
+The underlying 58 x 23 navigation grid keeps collision, room connections, and environmental puzzle behavior consistent. A shared room projection gives each rectangular room its own width/depth proportions, with matching isometric axes and a consistent 148-unit rear-wall height. The front walls are intentionally cut away to show the interior. Furniture footprints drive both artwork and navigation. It is never rendered as character art. No sprites, external images, fonts, frameworks, or runtime dependencies are needed.
 
 ## Playing
 
@@ -25,6 +25,10 @@ Select **USE**, click an inventory item, then click its target in the room or an
 - Touch controls support movement and all verbs.
 
 Walk is the default action on launch and every new night. Dialogue stays in a compact sticky panel above the room; the verb buttons sit directly below it in a sticky action dock. Audio, room objects, clues/progress, and room details collapse until needed. Pockets appear in the dock when Use is selected. Buttons have visible borders, filled backgrounds, and a pressed state. Room hotspots are retained during movement, so hovering labels remain stable. Progress saves locally. The new adventure uses its own save slot; previous cipher-game saves are left intact. Visited rooms can be revisited through the mansion directory.
+
+## Architectural references
+
+Room proportions and furnishing arrangements draw on [Harewood House’s floorplan and room photographs](https://harewood.org/explore/house/) and the [1840 Wimpole Hall floorplan catalog](https://www.nationaltrustcollections.org.uk/object/206268). This is an original mansion layout, rather than a reconstruction of either house. Dining chairs surround the central table; library shelving follows the wall with a fireplace and reading group; the bedroom has a wall-oriented canopy bed, bedside tables and wardrobe. Clear circulation paths preserve all existing puzzles. Reference photographs are studied for layout and are not distributed as game assets.
 
 ## Kitten animation
 
@@ -46,10 +50,12 @@ python3 -m http.server 8000
 
 Open http://localhost:8000. No build step is needed.
 
-GitHub Pages publishes from **main**, **/ (root)**. `index.html`, `style.css`, `visuals.js`, `adventure-data.js`, `audio.js`, and `game.js` make up the application; `.nojekyll` keeps publishing static and dependency-free.
+GitHub Pages publishes from **main**, **/ (root)**. `index.html`, `style.css`, `geometry.js`, `visuals.js`, `player.js`, `adventure-data.js`, `audio.js`, and `game.js` make up the application; `.nojekyll` keeps publishing static and dependency-free.
 
 ## Player character
 
 Each new night chooses one of seven illustrated characters, saved with the adventure. Room-space foot anchors remain fixed throughout stance. Alternating lifted steps, two-segment leg/arm joints, weight transfer, and a lifted closing step bring the character naturally to rest. Footfall sounds follow landing. The renderer updates the player alone between tiles and retains the current gait through room redraws. Reduced motion keeps the same character with immediate movement.
 
 Walking plants the leading foot slightly farther ahead of the body, with a calmer cadence (72 projected pixels per second). Double click or double tap a destination with Walk selected to run; double tap and hold a direction key to run using the keyboard. Running uses longer collision-checked strides, higher knee lift, bent arm swings, and airborne toe-off. A new single click returns to walking.
+
+Run the checks with `node tests/adventure.cjs`, `node tests/room-architecture.cjs`, `node tests/door-orientation.cjs`, `node tests/player-motion.cjs`, `node tests/player-game.cjs`, `node tests/cat-animation.cjs`, and `node tests/audio.cjs`.

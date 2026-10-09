@@ -3,7 +3,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const context={window:{}};
-vm.runInNewContext(fs.readFileSync(path.join(__dirname,'..','player.js'),'utf8'),context);
+for(const file of ['geometry.js','player.js'])vm.runInNewContext(fs.readFileSync(path.join(__dirname,'..',file),'utf8'),context);
 const player=context.window.BramblePlayer;
 const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
 function anatomy(pose){
@@ -28,18 +28,18 @@ for(const running of [false,true])for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]
   const before=motion.sample(now),support=before.feet[1-swing];
   assert(motion.stepTo(20+step*dx*stride,12+step*dy*stride,now,{running}));
   assert(!motion.stepTo(20+step*dx*stride,12+step*dy*stride,now+1),'Cannot interrupt a planted step');
-  let airborne=false;
-  for(let elapsed=0;elapsed<=190;elapsed+=5){
+  let airborne=false,ended=0;
+  for(let elapsed=0;elapsed<=225;elapsed+=5){
    const pose=motion.sample(now+elapsed),foot=pose.feet[1-swing];
    if(foot.lift===0){
     assert.equal(foot.x,support.x,'A foot on the floor cannot slide sideways');
     assert.equal(foot.y,support.y,'A foot on the floor cannot slide in depth');
    }
    if(running&&pose.feet.every(f=>f.lift>0))airborne=true;
-   anatomy(pose);frames++;
+   anatomy(pose);frames++;if(elapsed>0&&!pose.walking){ended=elapsed;break;}
   }
   if(running)assert(airborne,'Running needs an airborne phase');
-  const end=motion.sample(now+195);anatomy(end);
+  const end=motion.sample(now+ended);anatomy(end);
   assert(end.feet[swing].lift<1e-6,'Swing foot must land');
   const initial=player.rest(20,12).root,target=player.rest(20+step*dx*stride,12+step*dy*stride).root;
   const direction=target.map((v,i)=>v-initial[i]),length=Math.hypot(...direction);
@@ -47,7 +47,7 @@ for(const running of [false,true])for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]
   assert(lead>(running?3:5.5),'Leading foot must plant visibly ahead of the body');
   assert.equal(motion.drainFootfalls(),1,'Exactly one footfall per stride');
   assert.equal(motion.drainFootfalls(),0,'A redraw cannot replay the footfall');
-  now+=200;swing=1-swing;
+  now+=ended+5;swing=1-swing;
  }
  const stopped=motion.sample(now+1000),rest=player.rest(20+10*dx*stride,12+10*dy*stride);
  assert(!stopped.walking);anatomy(stopped);
@@ -69,7 +69,7 @@ assert(fast.sample(1150).walking,'Walking cadence should be calmer than the prev
 assert(!fast.sample(1190).walking,'Walking must finish a tile in under 190 ms');
 const reduced=player.create('foyer',20,12,{reduced:true});
 assert(reduced.stepTo(21,12,1000));assert(!reduced.busy(1001));assert(!reduced.sample(1001).walking);
-turning.sync('library',29,20);assert.deepEqual(Array.from(turning.sample(2000).root),Array.from(player.rest(29,20).root));
+turning.sync('library',29,20);assert.deepEqual(Array.from(turning.sample(2000).root),Array.from(player.rest(29,20,0,1,'library').root));
 assert.equal(player.styles.length,7);assert.equal(new Set(player.styles.map(s=>s.id)).size,7);
 for(const style of player.styles){
  const art=player.draw(style.id,player.rest(29,20));
